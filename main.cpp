@@ -7,8 +7,6 @@ int main(){
     int win_height = 750;
     sf::RenderWindow window(sf::VideoMode(win_width, win_height), "Dijkstra", sf::Style::Close | sf::Style::Resize);
 
-    sf::CircleShape check(15);
-    check.setFillColor(sf::Color::Red);
     while(window.isOpen()){
         sf::Event event; 
             while(window.pollEvent(event)){
@@ -19,8 +17,8 @@ int main(){
                 }
             }
 
-        window.clear();
-        window.draw(check);
-        window.display();
+        // window.clear();
+        // window.draw();
+        // window.display();
     }
 }

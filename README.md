@@ -7,3 +7,7 @@
 
 **Intrinsic**
 - Dijkstra algorithm (will it work on one node?)
+    - Dijkstra would need to know structure of drawn nodes
+
+- Implementation (Gui -> Dijkstra -> Node structure)
+- Gui is going to control both the node structure and the toggling the Dijkstra algorithm on and off
