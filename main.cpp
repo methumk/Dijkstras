@@ -136,29 +136,32 @@ int main(){
 
     //Testing deletion of nodes
         //Test case 1: NTD(node to delete) is head in graph and no children
-            //Appears to work
-        /* mygraph.createNewNode();
-        mygraph.createNewNode();
-        mygraph.createNewNode();
-        mygraph.createNewNode();
+            //WORKS
+        mygraph.createNewNode();    //0
+        mygraph.createNewNode();    //1
+        mygraph.createNewNode();    //2
+        mygraph.createNewNode();    //3
         std::cout<<"All graphs size: " << mygraph.getNumGraphs() <<'\n';
-        mygraph.deleteNode(1);
+        //mygraph.REVISEDdeleteNode(1);
         std::cout<<"All graphs size: " << mygraph.getNumGraphs() <<'\n';
-        mygraph.deleteNode(3);
+        //mygraph.REVISEDdeleteNode(3);
+        mygraph.joinNodes(0, 2, 10);
+        mygraph.joinNodes(2, 3, 12);
         std::cout<<"All graphs size: " << mygraph.getNumGraphs() <<'\n';
-        mygraph.deleteNode(0);
+        mygraph.REVISEDdeleteNode(0);
         std::cout<<"All graphs size: " << mygraph.getNumGraphs() <<'\n';
-        mygraph.deleteNode(2);
+        //mygraph.REVISEDdeleteNode(2);
         std::cout<<"All graphs size: " << mygraph.getNumGraphs() <<'\n';
         Node* fn = mygraph.REVISEDfindNode(3);
-        if (fn){
+        std::cout << "\nCheck\n";
+        if (fn != NULL){
             std::cout << "Found Node: " << fn->getNodeIdent() <<'\n'; 
-        } */
-
+        }else{
+            std::cout << "Node not found - correct\n";
+        } 
         //Test case 2: NTD is head and and no node in graph is connected with each other
-            //appears to work
             //Found bug with joining node after deleting NTD
-        mygraph.createNewNode();
+        /* mygraph.createNewNode();
         mygraph.createNewNode();
         mygraph.createNewNode();
         mygraph.createNewNode();
@@ -170,16 +173,9 @@ int main(){
         std::cout<<"All graphs size: " << mygraph.getNumGraphs() <<'\n';
         //mygraph.deleteNode(2);
         std::cout<<"All graphs size: " << mygraph.getNumGraphs() << "\n\n";
-        /* for (int i=0; i<5; ++i){
-            if (i!=2){
-            Node* fn = mygraph.REVISEDfindNode(i);
-            if (fn) std::cout << "Found Node: " << fn->getNodeIdent() <<'\n'; 
-            else std::cout << "Node not found: " << i <<'\n';
-            }
-        } */
         mygraph.joinNodes(0, 1, 10);
         mygraph.joinNodes(3, 1, 10);
-        std::cout<<"\nAll graphs size: " << mygraph.getNumGraphs() << "\n";
+        std::cout<<"\nAll graphs size: " << mygraph.getNumGraphs() << "\n"; */
         /* for (int i=0; i<5; ++i){
             
             Node* fn = mygraph.REVISEDfindNode(i);

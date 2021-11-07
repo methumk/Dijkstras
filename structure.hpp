@@ -119,8 +119,8 @@ private:
     ull curr_link_ident;
     //For node_locs: <Node identifier, all_graphs index>
     std::unordered_map<ull, unsigned int> node_locs;
-    //Keeps track of open cells in all_graphs (might implement later - to deal with all_graphs space usage)
-    std::unordered_set<unsigned int> open_locs;
+    //NOT YET IMPLEMENTED: Keeps track of open cells in all_graphs (might implement later - to deal with all_graphs space usage)
+    //std::unordered_set<unsigned int> open_locs;
 public:
     Graph(): curr_node_ident(0), curr_link_ident(0), num_graphs(0){};
 
@@ -153,6 +153,7 @@ public:
     Node* graphDFS(Node* curr, ull ident, std::unordered_set<ull>& visited){
         std::cout << "Curr node: " << curr->getNodeIdent() << '\n';
         if (curr->getNodeIdent() == ident){
+            std::cout << "DFS found: " << curr->getNodeIdent() << " == " << ident << '\n';
             return curr;
         }else{
             //mark current node as visited
@@ -196,7 +197,9 @@ public:
             exit(EXIT_FAILURE);
         }
         std::unordered_set<ull> visited;
-        return graphDFS(all_graphs[node_locs[ident]], ident, visited);
+        Node* ret = graphDFS(all_graphs[node_locs[ident]], ident, visited);
+        if (ret == NULL) std::cout << "DFS returned null\n";
+        return ret;
     }
 
     //should take in a given point, and create a new node as its own graph
@@ -212,13 +215,15 @@ public:
     }
 
     //takes an existing node an appends it as a new graph
-    void existingNodeToGraph(Node* node){
+    void existingNodeToIndependentGraph(Node* node){
         all_graphs.push_back(node);
+        std::cout << "Pushing Node: " << node->getNodeIdent() << " - vec size: " << all_graphs.size();
         node_locs[node->getNodeIdent()] = all_graphs.size()-1;
+        std::cout << " node is located at index: " << node_locs[node->getNodeIdent()] << '\n';
         num_graphs++;
     }
 
-    //runs DFS and chacnges each identifier's to the new_loc in all_graphs
+    //runs DFS and changes each identifier's to the new_loc in all_graphs
     //Arguments(new all_graphs location, graph head to move, set to keep track of visited node)
     void moveGraphLoc(unsigned int new_loc, Node* curr, std::unordered_set<ull>& visited){
         //mark current node as visited
@@ -299,10 +304,11 @@ public:
             exit(EXIT_FAILURE);
         }
 
-        //go to each child in current node and remove connection to curren node
+        //go to each child in current node and remove connection to current node
         //then delete current node
         unsigned int cloc = node_locs[ident];
-        bool is_curr_head = all_graphs[cloc]->getNodeIdent() == ident;
+        Node* curr_head = all_graphs[cloc];
+        bool is_curr_head = curr_head->getNodeIdent() == ident;
         
         Node* replace_head = NULL;
         Node* curr = REVISEDfindNode(ident);
@@ -319,7 +325,7 @@ public:
             std::vector<ADJ_NODE> v_links = child->getNodeLinks();
 
             //replace node head of graph to be deleted with first child
-            if (i==0 && is_curr_head) replace_head = child;
+            if (i==0 || is_curr_head) replace_head = child;
  
             //delete link from child node to current node
             for (unsigned int j=0; j < v_links.size(); ++j){
@@ -331,7 +337,7 @@ public:
 
             //make current child node a separate graph if it now has no linked nodes
             //and it is not already the head of its graph
-            if (v_links.size()==0 && all_graphs[cloc] != child && i!=0) existingNodeToGraph(child);
+            if (v_links.size()==0 && all_graphs[cloc] != child && i!=0) existingNodeToIndependentGraph(child);
         }
 
         
@@ -346,5 +352,63 @@ public:
 
         //remove current node from node_locs
         node_locs.erase(ident);
+    }
+
+
+    //given a node identifier, will delete that node and fix the (possibly) broken graph structure
+    void REVISEDdeleteNode(ull ident){
+        //Safety check to see if identifier should be in all_graphs
+        if (!node_locs.count(ident)){
+            std::cout << "ERROR in graph.deleteNodes: one of the nodes has not been created or appended into node_locs EXITING\n";
+            exit(EXIT_FAILURE);
+        }
+
+        
+        Node* NTD = REVISEDfindNode(ident);
+        //Try and check to see if Node to delete (NTD) was found
+        if (!NTD){
+            std::cout << "ERROR in graph.deleteNodes: node to be removed not found EXITING\n";
+            exit(EXIT_FAILURE);
+        }
+        unsigned int NTDloc = node_locs[ident];                 //get NTD all_graphs location
+        std::vector<ADJ_NODE> links = NTD->getNodeLinks();      //get NTD's node links
+
+
+        //Determine current graph head identifier & see if NTD is the graph head
+        ull cur_ghead_ident = all_graphs[NTDloc]->getNodeIdent();
+        bool NTD_is_head = (cur_ghead_ident == NTD->getNodeIdent());
+        
+        //search each child for link to NTD
+        for (unsigned int i=0; i < links.size(); ++i){
+            //get child and child's links to search
+            Node* child = std::get<0>(links[i]);
+            std::vector<ADJ_NODE> clinks = child->getNodeLinks();
+
+            //find and remove NTD from NTD's child link
+            for (unsigned int j=0; j < clinks.size(); ++j){
+                Node* inspect = std::get<0>(clinks[j]);
+                if (inspect->getNodeIdent() == ident){
+                    clinks.erase(clinks.begin()+j);
+                    break;
+                }
+            }
+
+            //check if the child node is its own graph now that link to NTD is severed
+            if (NTD_is_head || clinks.size()==0){
+                //make a node its own graph only if that node is not already the head of the current graph
+                if (child->getNodeIdent() != cur_ghead_ident) 
+                    existingNodeToIndependentGraph(child);
+            }
+        }
+
+
+        //remove NTD data from node_locs and all_graphs, decrement total number of graphs
+        node_locs.erase(ident);
+        delete NTD;
+        if (NTD_is_head){
+            all_graphs[NTDloc] = NULL;
+            num_graphs--;
+        } 
+        
     }
 };
