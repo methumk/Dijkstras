@@ -26,8 +26,8 @@ public:
     typedef std::tuple<Node*, unsigned int, ull> ADJ_NODE;
     typedef std::vector<ADJ_NODE> NODE_VEC;
 private:
-    ull ident;
-    std::vector<ADJ_NODE> links;
+    ull ident;                              //Nodes identifying number
+    std::vector<ADJ_NODE> links;            //The nodes connections: vector of tuples<node, link weight, node identifier>
     sf::CircleShape GUInode;
 public:
     Node(){}
@@ -100,6 +100,17 @@ public:
     Node* getAdjNode(ull ident){
         return NULL;
     }
+
+    //removes current node's link to a given node from its links vector
+    void remLinktoNode(ull ident){
+        for (unsigned int i=0; i < links.size(); ++i){
+            Node* inspect = std::get<0>(links[i]);
+            if (inspect->getNodeIdent() == ident){
+                links.erase(links.begin()+i);
+                break;
+            }
+        }
+    }
 };
 
 
@@ -113,12 +124,13 @@ Graph class:
 class Graph{
 private:
     typedef std::tuple<Node*, unsigned int, ull> ADJ_NODE;
-    std::vector<Node*> all_graphs;
     size_t num_graphs;
-    ull curr_node_ident;
-    ull curr_link_ident;
+    ull curr_node_ident;                //used to create a new unique node identifier
+    ull curr_link_ident;                //used to create a new unique link identifier
+    std::vector<Node*> all_graphs;      //vector containing all graphs
     //For node_locs: <Node identifier, all_graphs index>
     std::unordered_map<ull, unsigned int> node_locs;
+
     //NOT YET IMPLEMENTED: Keeps track of open cells in all_graphs (might implement later - to deal with all_graphs space usage)
     //std::unordered_set<unsigned int> open_locs;
 public:
@@ -196,8 +208,16 @@ public:
             std::cout << "ERROR in graph.REVISEDfindNode - Node location not recorded in map\n";
             exit(EXIT_FAILURE);
         }
+        
+        Node* findNode = all_graphs[node_locs[ident]];
+        if (findNode == NULL){
+            std::cout << "REVISEDfindNode: Error - node to find is not in all_graphs\n";
+            std::cout << "\t Searching for node: " << ident;
+            std::cout << "\n\t Searched for index: " << node_locs[ident] << " in all_graphs\n";
+        }
+
         std::unordered_set<ull> visited;
-        Node* ret = graphDFS(all_graphs[node_locs[ident]], ident, visited);
+        Node* ret = graphDFS(findNode, ident, visited);
         if (ret == NULL) std::cout << "DFS returned null\n";
         return ret;
     }
@@ -225,6 +245,7 @@ public:
 
     //runs DFS and changes each identifier's to the new_loc in all_graphs
     //Arguments(new all_graphs location, graph head to move, set to keep track of visited node)
+    //doesnt update num_graphs after move
     void moveGraphLoc(unsigned int new_loc, Node* curr, std::unordered_set<ull>& visited){
         //mark current node as visited
         visited.insert(curr->getNodeIdent());
@@ -238,6 +259,29 @@ public:
         for (unsigned int i = 0; i < links.size(); ++i){
             Node* inspect = std::get<0>(links[i]);
             if (!visited.count(inspect->getNodeIdent())){
+                moveGraphLoc(new_loc, inspect, visited);
+            }
+        }
+    }
+
+    //runs DFS and changes nodes identifier's to the new_loc in all_graph
+    //Only changes 
+    void moveGraphLoconDelete(unsigned int new_loc, Node* curr, std::unordered_set<ull>& visited, std::unordered_map<ull, bool>& nodechanged){
+        //mark current node as visited
+        visited.insert(curr->getNodeIdent());
+        //move current node to the new all_graph locs
+        node_locs[curr->getNodeIdent()] = new_loc;
+        //get current node's links list
+        std::vector<ADJ_NODE> links = curr->getNodeLinks();
+
+        //check each node in currents links 
+        for (unsigned int i = 0; i < links.size(); ++i){
+            Node* inspect = std::get<0>(links[i]);
+            if (!visited.count(inspect->getNodeIdent())){
+                //mark the node as changed graph if it was a node that was severed from the NTD
+                if (nodechanged.count(inspect->getNodeIdent())) 
+                    nodechanged[inspect->getNodeIdent()] = 1;
+                
                 moveGraphLoc(new_loc, inspect, visited);
             }
         }
@@ -356,59 +400,72 @@ public:
 
 
     //given a node identifier, will delete that node and fix the (possibly) broken graph structure
-    void REVISEDdeleteNode(ull ident){
-        //Safety check to see if identifier should be in all_graphs
-        if (!node_locs.count(ident)){
+    void REVISEDdeleteNode(ull NTDident){
+        //Safety check to see if NTDidentifier should be in all_graphs
+        if (!node_locs.count(NTDident)){
             std::cout << "ERROR in graph.deleteNodes: one of the nodes has not been created or appended into node_locs EXITING\n";
             exit(EXIT_FAILURE);
         }
 
         
-        Node* NTD = REVISEDfindNode(ident);
+        Node* NTD = REVISEDfindNode(NTDident);
         //Try and check to see if Node to delete (NTD) was found
         if (!NTD){
             std::cout << "ERROR in graph.deleteNodes: node to be removed not found EXITING\n";
             exit(EXIT_FAILURE);
         }
-        unsigned int NTDloc = node_locs[ident];                 //get NTD all_graphs location
-        std::vector<ADJ_NODE> links = NTD->getNodeLinks();      //get NTD's node links
+        unsigned int NTDloc = node_locs[NTDident];                 //get NTD all_graphs location
+        std::vector<ADJ_NODE> links = NTD->getNodeLinks();         //get NTD's node links
 
 
-        //Determine current graph head identifier & see if NTD is the graph head
+        //Determine if NTD is the graph head
         ull cur_ghead_ident = all_graphs[NTDloc]->getNodeIdent();
         bool NTD_is_head = (cur_ghead_ident == NTD->getNodeIdent());
         
-        //search each child for link to NTD
+        //keeps track of the nodes identifier whose link with NTD was severed
+        std::unordered_map<ull, bool> nodechanged;
+
+        //search each child for link to NTD and remove that links
         for (unsigned int i=0; i < links.size(); ++i){
-            //get child and child's links to search
             Node* child = std::get<0>(links[i]);
-            std::vector<ADJ_NODE> clinks = child->getNodeLinks();
-
-            //find and remove NTD from NTD's child link
-            for (unsigned int j=0; j < clinks.size(); ++j){
-                Node* inspect = std::get<0>(clinks[j]);
-                if (inspect->getNodeIdent() == ident){
-                    clinks.erase(clinks.begin()+j);
-                    break;
-                }
-            }
-
-            //check if the child node is its own graph now that link to NTD is severed
-            if (NTD_is_head || clinks.size()==0){
-                //make a node its own graph only if that node is not already the head of the current graph
-                if (child->getNodeIdent() != cur_ghead_ident) 
-                    existingNodeToIndependentGraph(child);
-            }
+            //remove the link to NTD from child
+            child->remLinktoNode(NTDident);
+            
+            //save the removed node in the map
+            nodechanged[child->getNodeIdent()] = 0;
         }
 
 
+        //TODO: need to update all_graphs vector and then append; don't know if node changing is at head
+        for (unsigned int i=0; i < links.size(); ++i){
+            //Attempt to change a node's graph position if it hasn't been changed by a previous node
+            Node* child = std::get<0>(links[i]);
+            if (!nodechanged[child->getNodeIdent()]){
+                std::cout << "DELETEnode: \n\tCreating new graph for node: " << child->getNodeIdent() << " curr loc: " << node_locs[child->getNodeIdent()] << '\n';
+                std::unordered_set<ull> visited;
+                std::cout << "\tCurr graphs: " << num_graphs << " - node going to index: " << all_graphs.size() << std::endl;
+                //change the nodes in the graph to position num_graphs+1
+                moveGraphLoconDelete(all_graphs.size(), child, visited, nodechanged);
+
+                //make current child the head of the new graph
+                all_graphs.push_back(child);
+                num_graphs++;
+                std::cout <<"\tNode: " << child->getNodeIdent() << " now located at graph: " << node_locs[child->getNodeIdent()] << "\n";
+                Node * s = all_graphs[node_locs[child->getNodeIdent()]];
+                if (s == NULL){
+                    std::cout << "\tNode: " << child->getNodeIdent() << " not found as head of graph\n";
+                }else{
+                    std::cout << "\tNode: " << child->getNodeIdent() << " shud equal head: " << s->getNodeIdent() << "\n";
+                }
+            }
+        }
+
         //remove NTD data from node_locs and all_graphs, decrement total number of graphs
-        node_locs.erase(ident);
+        node_locs.erase(NTDident);
         delete NTD;
-        if (NTD_is_head){
-            all_graphs[NTDloc] = NULL;
-            num_graphs--;
-        } 
+        all_graphs[NTDloc] = NULL;
+        num_graphs--;
+        
         
     }
 };

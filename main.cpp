@@ -141,23 +141,23 @@ int main(){
         mygraph.createNewNode();    //1
         mygraph.createNewNode();    //2
         mygraph.createNewNode();    //3
-        std::cout<<"All graphs size: " << mygraph.getNumGraphs() <<'\n';
+        std::cout<<"1 All graphs size: " << mygraph.getNumGraphs() <<'\n';
         //mygraph.REVISEDdeleteNode(1);
-        std::cout<<"All graphs size: " << mygraph.getNumGraphs() <<'\n';
+        std::cout<<"2 All graphs size: " << mygraph.getNumGraphs() <<'\n';
         //mygraph.REVISEDdeleteNode(3);
         mygraph.joinNodes(0, 2, 10);
+        std::cout<<"3 All graphs size: " << mygraph.getNumGraphs() <<'\n';
         mygraph.joinNodes(2, 3, 12);
-        std::cout<<"All graphs size: " << mygraph.getNumGraphs() <<'\n';
+        std::cout<<"4 All graphs size: " << mygraph.getNumGraphs() <<'\n';
         mygraph.REVISEDdeleteNode(0);
-        std::cout<<"All graphs size: " << mygraph.getNumGraphs() <<'\n';
-        //mygraph.REVISEDdeleteNode(2);
-        std::cout<<"All graphs size: " << mygraph.getNumGraphs() <<'\n';
+        std::cout<<"5 DELETE 0 - All graphs size: " << mygraph.getNumGraphs() <<'\n';
+
         Node* fn = mygraph.REVISEDfindNode(3);
         std::cout << "\nCheck\n";
         if (fn != NULL){
             std::cout << "Found Node: " << fn->getNodeIdent() <<'\n'; 
         }else{
-            std::cout << "Node not found - correct\n";
+            std::cout << "Node not found - incorrect\n";
         } 
         //Test case 2: NTD is head and and no node in graph is connected with each other
             //Found bug with joining node after deleting NTD
