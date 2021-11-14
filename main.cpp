@@ -142,16 +142,15 @@ int main(){
         mygraph.createNewNode();    //2
         mygraph.createNewNode();    //3
         std::cout<<"1 All graphs size: " << mygraph.getNumGraphs() <<'\n';
-        std::cout<<"2 All graphs size: " << mygraph.getNumGraphs() <<'\n';
         mygraph.joinNodes(0, 2, 10);
-        std::cout<<"3 All graphs size: " << mygraph.getNumGraphs() <<'\n';
+        std::cout<<"2 All graphs size: " << mygraph.getNumGraphs() <<'\n';
         mygraph.joinNodes(2, 3, 12);
-        std::cout<<"4 All graphs size: " << mygraph.getNumGraphs() <<'\n';
+        std::cout<<"3 All graphs size: " << mygraph.getNumGraphs() <<'\n';
         mygraph.REVISEDdeleteNode(0);
-        std::cout<<"5 DELETE 0 - All graphs size: " << mygraph.getNumGraphs() <<'\n';
+        std::cout<<"4 DELETE 0 - All graphs size: " << mygraph.getNumGraphs() <<'\n';
         mygraph.joinNodes(1, 3, 5);
-        std::cout<<"6 All graphs size: " << mygraph.getNumGraphs() <<'\n';
-        Node* fn = mygraph.REVISEDfindNode(1);
+        std::cout<<"5 All graphs size: " << mygraph.getNumGraphs() <<'\n';
+        Node* fn = mygraph.REVISEDfindNode(3);
         std::cout << "\nCheck\n";
         if (fn != NULL){
             std::cout << "Found Node: " << fn->getNodeIdent() <<'\n'; 
@@ -159,8 +158,8 @@ int main(){
             std::cout << "Node not found - incorrect\n";
         } 
         mygraph.REVISEDdeleteNode(2);
-        std::cout<<"7 All graphs size: " << mygraph.getNumGraphs() <<'\n';
-        fn = mygraph.REVISEDfindNode(1);
+        std::cout<<"6 All graphs size: " << mygraph.getNumGraphs() <<'\n';
+        fn = mygraph.REVISEDfindNode(3);
         std::cout << "\nCheck\n";
         if (fn != NULL){
             std::cout << "Found Node: " << fn->getNodeIdent() <<'\n'; 
@@ -170,7 +169,7 @@ int main(){
         mygraph.REVISEDdeleteNode(1);
         mygraph.REVISEDdeleteNode(3);
         std::cout<<"8 All graphs size: " << mygraph.getNumGraphs() <<'\n';
-        fn = mygraph.REVISEDfindNode(3);
+        fn = mygraph.REVISEDfindNode(1);
         std::cout << "\nCheck\n";
         if (fn != NULL){
             std::cout << "Found Node: " << fn->getNodeIdent() <<'\n'; 

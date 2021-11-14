@@ -1,6 +1,7 @@
 /*
 structure.hpp
-    - 
+    - Contains the structure for a single node
+    - Contains the structure to contain multiple graphs and corresponding functionalities
 */
 #pragma once
 #include <SFML/Graphics.hpp>
@@ -125,12 +126,11 @@ class Graph{
 private:
     typedef std::tuple<Node*, unsigned int, ull> ADJ_NODE;
     size_t num_graphs;
-    ull curr_node_ident;                //used to create a new unique node identifier
-    ull curr_link_ident;                //used to create a new unique link identifier
-    std::vector<Node*> all_graphs;      //vector containing all graphs
-    //For node_locs: <Node identifier, all_graphs index>
-    std::unordered_map<ull, unsigned int> node_locs;
-
+    ull curr_node_ident;                                    //used to create a new unique node identifier
+    ull curr_link_ident;                                    //used to create a new unique link identifier
+    std::vector<Node*> all_graphs;                          //vector containing all graphs
+    std::unordered_map<ull, unsigned int> node_locs;        //For node_locs: <Node identifier, all_graphs index>                       
+    std::vector<unsigned int> open_locs;                    //Keeps track of indices in all_graphs that are null
     //NOT YET IMPLEMENTED: Keeps track of open cells in all_graphs (might implement later - to deal with all_graphs space usage)
     //std::unordered_set<unsigned int> open_locs;
 public:
@@ -323,15 +323,30 @@ public:
                 num_graphs--;
             }
 
-            //CHECK TO SEE IF NODES ALREADY CONNECTED
-            //connect the two nodes together
-            ull link_ident = getNewLinkIdent();
-            n1->addNode(n2, link_weight, link_ident);
-            n2->addNode(n1, link_weight, link_ident);
+            //Check to see if nodes are connected
+            int alreadyConnected = 0;
+            std::vector<ADJ_NODE> links = n1->getNodeLinks();
+            for (unsigned int i =0; i < links.size(); ++i){
+                Node* check = std::get<0>(links[i]);
+                if (check->getNodeIdent() == n2->getNodeIdent()){
+                    alreadyConnected = 1;
+                    break;
+                }
+            }
+
+            //connect the two nodes together if not already conencted
+            if (!alreadyConnected){
+                ull link_ident = getNewLinkIdent();
+                n1->addNode(n2, link_weight, link_ident);
+                n2->addNode(n1, link_weight, link_ident);
+            }
 
             //remove graph getting moved from all_graphs if locations are different
-            // if (loc1 != loc2) all_graphs.erase(all_graphs.begin()+loc2);
-            if (loc1 != loc2) all_graphs[loc2] = NULL;
+            //record open position in open_locs
+            if ((loc1 != loc2) && !alreadyConnected){
+                all_graphs[loc2] = NULL;
+                open_locs.push_back(loc2);
+            }
             
         }
 
@@ -377,15 +392,24 @@ public:
             //Attempt to change a node's graph position if it hasn't been changed by a previous node
             Node* child = std::get<0>(links[i]);
             if (!nodechanged[child->getNodeIdent()]){
-                std::cout << "DELETEnode: \n\tCreating new graph for node: " << child->getNodeIdent() << " curr loc: " << node_locs[child->getNodeIdent()] << '\n';
-                std::cout << "\tCurr graphs: " << num_graphs << " - node going to index: " << all_graphs.size() << std::endl;
                 
+                //determine first open position to move the graph to
+                int newpos = all_graphs.size();
+                if (open_locs.size() > 0){
+                    newpos = open_locs[0];
+                    open_locs.erase(open_locs.begin());
+                }
+
+                std::cout << "DELETEnode: \n\tCreating new graph for node: " << child->getNodeIdent() << " curr loc: " << node_locs[child->getNodeIdent()] << '\n';
+                std::cout << "\tCurr graphs: " << num_graphs << " - node going to index: " << newpos << std::endl;
                 std::unordered_set<ull> visited;
                 //change the nodes in the graph to position num_graphs+1
-                moveGraphLoconDelete(all_graphs.size(), child, visited, nodechanged);
+                moveGraphLoconDelete(newpos, child, visited, nodechanged);
 
                 //make current child the head of the new graph
-                all_graphs.push_back(child);
+                //all_graphs.push_back(child);
+                //move child head node to previously null location
+                all_graphs[newpos] = child;
                 num_graphs++;
 
                 //ERROR CHECKING BELOW
@@ -404,7 +428,12 @@ public:
         delete NTD;
         all_graphs[NTDloc] = NULL;
         num_graphs--;
-        
-        
+        //record NTDloc as open
+        open_locs.push_back(NTDloc);
+    }
+
+    //updates the link connection weight between two nodes
+    void updateNodeLink(){
+
     }
 };
