@@ -337,67 +337,6 @@ public:
 
     }
 
-    //deletes a given nodes and links to other nodes
-    //have to determine if node is a head value for the graph before deleting
-        //if it is then you have to find a different node to be the head
-        //1 - [2, 3]
-        //2 and 3 are now there own graphs
-    void deleteNode(ull ident){
-        if (!node_locs.count(ident)){
-            std::cout << "ERROR in graph.deleteNodes: one of the nodes has not been created or appended into node_locs EXITING\n";
-            exit(EXIT_FAILURE);
-        }
-
-        //go to each child in current node and remove connection to current node
-        //then delete current node
-        unsigned int cloc = node_locs[ident];
-        Node* curr_head = all_graphs[cloc];
-        bool is_curr_head = curr_head->getNodeIdent() == ident;
-        
-        Node* replace_head = NULL;
-        Node* curr = REVISEDfindNode(ident);
-        if (!curr){
-            std::cout << "ERROR in graph.deleteNodes: node to be removed not found EXITING\n";
-            exit(EXIT_FAILURE);
-        }
-        std::vector<ADJ_NODE> links = curr->getNodeLinks();
-
-
-        //search each child nodes node vector for link to current node
-        for (unsigned int i=0; i < links.size(); ++i){
-            Node* child = std::get<0>(links[i]);
-            std::vector<ADJ_NODE> v_links = child->getNodeLinks();
-
-            //replace node head of graph to be deleted with first child
-            if (i==0 || is_curr_head) replace_head = child;
- 
-            //delete link from child node to current node
-            for (unsigned int j=0; j < v_links.size(); ++j){
-                if (std::get<0>(v_links[j]) == curr){
-                    v_links.erase(v_links.begin()+j);
-                    break;
-                }
-            }
-
-            //make current child node a separate graph if it now has no linked nodes
-            //and it is not already the head of its graph
-            if (v_links.size()==0 && all_graphs[cloc] != child && i!=0) existingNodeToIndependentGraph(child);
-        }
-
-        
-        //delete current node's memory
-        delete all_graphs[cloc];
-        //replace current head to be removed with first child of current node as the new head of the graph
-        if (replace_head) all_graphs[cloc] = replace_head;
-        else{
-            all_graphs[cloc] = NULL;
-            num_graphs--;
-        } 
-
-        //remove current node from node_locs
-        node_locs.erase(ident);
-    }
-
 
     //given a node identifier, will delete that node and fix the (possibly) broken graph structure
     void REVISEDdeleteNode(ull NTDident){
@@ -406,7 +345,6 @@ public:
             std::cout << "ERROR in graph.deleteNodes: one of the nodes has not been created or appended into node_locs EXITING\n";
             exit(EXIT_FAILURE);
         }
-
         
         Node* NTD = REVISEDfindNode(NTDident);
         //Try and check to see if Node to delete (NTD) was found
@@ -414,42 +352,43 @@ public:
             std::cout << "ERROR in graph.deleteNodes: node to be removed not found EXITING\n";
             exit(EXIT_FAILURE);
         }
+
+
         unsigned int NTDloc = node_locs[NTDident];                 //get NTD all_graphs location
         std::vector<ADJ_NODE> links = NTD->getNodeLinks();         //get NTD's node links
-
-
-        //Determine if NTD is the graph head
-        ull cur_ghead_ident = all_graphs[NTDloc]->getNodeIdent();
-        bool NTD_is_head = (cur_ghead_ident == NTD->getNodeIdent());
         
         //keeps track of the nodes identifier whose link with NTD was severed
         std::unordered_map<ull, bool> nodechanged;
 
-        //search each child for link to NTD and remove that links
+        //search and remove link from child to NTD
+        //save child node into map to update graph pos later
         for (unsigned int i=0; i < links.size(); ++i){
             Node* child = std::get<0>(links[i]);
             //remove the link to NTD from child
             child->remLinktoNode(NTDident);
             
-            //save the removed node in the map
+            //save the child node in the map
             nodechanged[child->getNodeIdent()] = 0;
         }
 
 
-        //TODO: need to update all_graphs vector and then append; don't know if node changing is at head
+        //update NTD's childrens graph positions
         for (unsigned int i=0; i < links.size(); ++i){
             //Attempt to change a node's graph position if it hasn't been changed by a previous node
             Node* child = std::get<0>(links[i]);
             if (!nodechanged[child->getNodeIdent()]){
                 std::cout << "DELETEnode: \n\tCreating new graph for node: " << child->getNodeIdent() << " curr loc: " << node_locs[child->getNodeIdent()] << '\n';
-                std::unordered_set<ull> visited;
                 std::cout << "\tCurr graphs: " << num_graphs << " - node going to index: " << all_graphs.size() << std::endl;
+                
+                std::unordered_set<ull> visited;
                 //change the nodes in the graph to position num_graphs+1
                 moveGraphLoconDelete(all_graphs.size(), child, visited, nodechanged);
 
                 //make current child the head of the new graph
                 all_graphs.push_back(child);
                 num_graphs++;
+
+                //ERROR CHECKING BELOW
                 std::cout <<"\tNode: " << child->getNodeIdent() << " now located at graph: " << node_locs[child->getNodeIdent()] << "\n";
                 Node * s = all_graphs[node_locs[child->getNodeIdent()]];
                 if (s == NULL){
