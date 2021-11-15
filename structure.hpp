@@ -222,15 +222,26 @@ public:
         return ret;
     }
 
-    //should take in a given point, and create a new node as its own graph
-    //records the new node into the map and stores which index in the graphs vector it is in
-    //right now just going to give it node identifier parameter
-    //ATTENTION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
-        //EMPLACING NEW NODE AS ALL_GRAPHS.SIZE()-1 might be a problem if you try to utilize unused space
+    //creates a new individual node and implants it as its own graph
     void createNewNode(){
         ull ident = getNewNodeIdent();
-        all_graphs.push_back(new Node(ident));
-        node_locs.emplace(ident, all_graphs.size()-1);
+        unsigned int openidx = -1;
+        for (unsigned int i=0; i < all_graphs.size(); ++i){
+            if (all_graphs[i] == NULL){
+                openidx = i;
+                break;
+            }
+        }
+
+        //if there are no open spaces in all_graphs append the new node
+        //otherwise append in found open spot
+        if (openidx == -1){
+            all_graphs.push_back(new Node(ident));
+            node_locs.emplace(ident, all_graphs.size()-1);
+        }else{
+            all_graphs[openidx] = new Node(ident);
+            node_locs.emplace(ident, openidx);
+        }
         num_graphs++;
     }
 
