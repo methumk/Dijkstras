@@ -31,6 +31,22 @@ int main(){
     } */
 
     Graph mygraph;
+    //Test UpdateLinkWeight
+    //Worked
+    /* mygraph.createNewNode();    //0
+    mygraph.createNewNode();    //1
+
+    std::cout << "~1\n";
+    mygraph.joinNodes(0, 1, 10);
+    mygraph.displayLinkWeight(0, 1);
+    std::cout << "~2\n";
+    mygraph.updateNodeLink(1, 0, 30);
+    mygraph.displayLinkWeight(0, 1);
+    std::cout << "~3\n";
+    mygraph.updateNodeLink(0, 1, 900);
+    mygraph.displayLinkWeight(0, 1); */
+
+
     /*
         0->(1, 2, 3)
         1->(*0, 2, 4)

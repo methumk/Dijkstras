@@ -432,8 +432,146 @@ public:
         open_locs.push_back(NTDloc);
     }
 
-    //updates the link connection weight between two nodes
-    void updateNodeLink(){
+    //updates the link connection weight between two nodes by pointer to a given link weight
+    void updateNodeLink(Node* n1, Node* n2, unsigned int lw){
+        if (n1 == NULL){
+            std::cout << "UpdateNodeLink: Error - n1 null\n";
+            exit(EXIT_FAILURE);
+        }
+        if (n2 == NULL){
+            std::cout << "UpdateNodeLink: Error - n2 null\n";
+            exit(EXIT_FAILURE);
+        }
 
+        bool n1connected = 0, n2connected = 0;
+        unsigned int idx1, idx2;
+        //check that the two nodes are connected to each other and in the same graph
+        std::vector<ADJ_NODE>& l1 = n1->getNodeLinks();
+        std::vector<ADJ_NODE>& l2 = n2->getNodeLinks();
+        for (unsigned int i=0; i < l1.size(); ++i){
+            Node* check = std::get<0>(l1[i]);
+            //search first node for link to second node
+            if (check == n2){
+                idx2 = i;
+                n1connected =1;
+                break;
+            }
+        }
+        for (unsigned int i=0; i < l2.size(); ++i){
+            Node* check = std::get<0>(l2[i]);
+            //search second node for link to first node
+            if (check == n1){
+                idx1 = i;
+                n2connected =1;
+                break;
+            }
+        }
+
+
+        // If the nodes aren't doubly linked to each other exit
+        if (!n1connected || !n2connected){
+            if (!n1connected)
+                std::cout << "UpdateNodeLink: Error - N1 isn't connected to N2\n";
+            if (!n2connected)
+                std::cout << "UpdateNodeLink: Error - N2 isn't connected to N1\n";
+            exit(EXIT_FAILURE);
+        }
+
+        //update link weight for n1
+        ADJ_NODE& change = l1[idx2];
+        std::get<1>(change) = lw;
+        l1[idx2] = change;
+
+        //update link weight for n2
+        change = l2[idx1];
+        std::get<1>(change) = lw;
+        l2[idx1] = change;
+    }
+
+    //updates the link connection weight between two nodes by identifier to a given link weight
+    void updateNodeLink(ull ident1, ull ident2, unsigned int lw){
+        std::cout << "UpdateNodeLin:\n\tSearching n1\n";
+        Node* n1 = REVISEDfindNode(ident1);
+        std::cout << "\tSearching n2\n";
+        Node* n2 = REVISEDfindNode(ident2);
+        if (n1 == NULL){
+            std::cout << "UpdateNodeLink: Error - n1 null\n";
+            exit(EXIT_FAILURE);
+        }
+        if (n2 == NULL){
+            std::cout << "UpdateNodeLink: Error - n2 null\n";
+            exit(EXIT_FAILURE);
+        }
+        std::cout << "\t\tUpdate Found all nodes\n";
+
+        bool n1connected = 0, n2connected = 0;
+        unsigned int idx1, idx2;
+        //check that the two nodes are connected to each other and in the same graph
+        std::vector<ADJ_NODE>& l1 = n1->getNodeLinks();
+        std::vector<ADJ_NODE>& l2 = n2->getNodeLinks();
+        for (unsigned int i=0; i < l1.size(); ++i){
+            Node* check = std::get<0>(l1[i]);
+            //search first node for link to second node
+            if (check == n2){
+                idx2 = i;
+                n1connected =1;
+                break;
+            }
+        }
+        for (unsigned int i=0; i < l2.size(); ++i){
+            Node* check = std::get<0>(l2[i]);
+            //search second node for link to first node
+            if (check == n1){
+                idx1 = i;
+                n2connected =1;
+                break;
+            }
+        }
+
+
+        // If the nodes aren't doubly linked to each other exit
+        if (!n1connected || !n2connected){
+            if (!n1connected)
+                std::cout << "UpdateNodeLink: Error - N1 isn't connected to N2\n";
+            if (!n2connected)
+                std::cout << "UpdateNodeLink: Error - N2 isn't connected to N1\n";
+            exit(EXIT_FAILURE);
+        }
+
+        //update link weight for n1
+        ADJ_NODE& change = l1[idx2];
+        std::get<1>(change) = lw;
+        l1[idx2] = change;
+
+        //update link weight for n2
+        ADJ_NODE& change2 = l2[idx1];
+        std::get<1>(change2) = lw;
+        l2[idx1] = change2;
+        std::cout << "\t\tUpdate Finished\n";
+    }
+
+    void displayLinkWeight(ull ident1, ull ident2){
+        Node* n1 = REVISEDfindNode(ident1);
+        Node* n2 = REVISEDfindNode(ident2);
+
+        std::vector<ADJ_NODE> l1 = n1->getNodeLinks();
+        std::vector<ADJ_NODE> l2 = n2->getNodeLinks();
+        for (unsigned int i=0; i < l1.size(); ++i){
+            Node* check = std::get<0>(l1[i]);
+            //search first node for link to second node
+            if (check == n2){
+                std::cout << "displayLinkWeight:\n\t" << ident1 << " -> " << ident2 << " weight: " << std::get<1>(l1[i]);
+                break;
+            }
+        }
+
+        for (unsigned int i=0; i < l2.size(); ++i){
+            Node* check = std::get<0>(l2[i]);
+            //search second node for link to first node
+            if (check == n1){
+                std::cout << "\n\t" << ident2 << " -> " << ident1 << " weight: " << std::get<1>(l2[i]) << std::endl;
+                break;
+            }
+        }
     }
 };
