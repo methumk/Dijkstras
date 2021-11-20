@@ -552,13 +552,10 @@ public:
         //update link weight for n1
         ADJ_NODE& change = l1[idx2];
         std::get<1>(change) = lw;
-        l1[idx2] = change;
 
         //update link weight for n2
         ADJ_NODE& change2 = l2[idx1];
         std::get<1>(change2) = lw;
-        l2[idx1] = change2;
-        std::cout << "\t\tUpdate Finished\n";
     }
 
     void displayLinkWeight(ull ident1, ull ident2){
