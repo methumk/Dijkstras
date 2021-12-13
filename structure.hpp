@@ -50,11 +50,11 @@ public:
     }
 
     //add a new linked up node by tuple
-    void addNode(ADJ_NODE addNode){
+    inline void addNode(ADJ_NODE addNode){
         links.push_back(addNode);
     }
 
-    void printCurrNode(){
+    inline void printCurrNode(){
         std::cout << "Node ident: " << ident << '\n';
     }
 
@@ -81,24 +81,24 @@ public:
     }
 
     //retrieves node and link information at the given links index
-    ADJ_NODE getNodeInfo(unsigned int i){
+    inline ADJ_NODE getNodeInfo(unsigned int i){
         return links[i];
     }
 
     //have to do dfs on graph to find correct identifier
     //retrieves node and link information at the given node identifier
-    ADJ_NODE getNodeInfo(ull i){
+    inline ADJ_NODE getNodeInfo(ull i){
         return links[i];
     }
 
     //retrieves Node for a node at the given links index
-    Node* getAdjNode(unsigned int i){
+    inline Node* getAdjNode(unsigned int i){
         return std::get<0>(links[i]);
     }
 
     //have to do dfs on graph to find correct identifier
     //retrieves Node for the node with the given node identifier
-    Node* getAdjNode(ull ident){
+    inline Node* getAdjNode(ull ident){
         return NULL;
     }
 
@@ -205,7 +205,7 @@ public:
     //REVISED: you don't have to tell which all_graphs index to look into
     Node* REVISEDfindNode(ull ident){
         if (!node_locs.count(ident)){
-            std::cout << "ERROR in graph.REVISEDfindNode - Node location not recorded in map\n";
+            std::cout << "ERROR in graph.REVISEDfindNode - Node location not recorded in map - EXITING\n";
             exit(EXIT_FAILURE);
         }
         
@@ -213,7 +213,8 @@ public:
         if (findNode == NULL){
             std::cout << "REVISEDfindNode: Error - node to find is not in all_graphs\n";
             std::cout << "\t Searching for node: " << ident;
-            std::cout << "\n\t Searched for index: " << node_locs[ident] << " in all_graphs\n";
+            std::cout << "\n\t Searched for index: " << node_locs[ident] << " in all_graphs - EXITING\n";
+            exit(EXIT_FAILURE);
         }
 
         std::unordered_set<ull> visited;
@@ -558,6 +559,7 @@ public:
         std::get<1>(change2) = lw;
     }
 
+    //debug function to see the link weight between two nodes
     void displayLinkWeight(ull ident1, ull ident2){
         Node* n1 = REVISEDfindNode(ident1);
         Node* n2 = REVISEDfindNode(ident2);
@@ -581,5 +583,40 @@ public:
                 break;
             }
         }
+    }
+
+    //helper function for clearGraph that saves all nodes in the graph recursively into NTDS
+    void clearGraphHelper(Node* curr, std::unordered_set<ull>& visited, std::vector<Node*>& NTDS){
+        //save current node in NTDS and mark it as visited
+        visited.insert(curr->getNodeIdent());
+        NTDS.push_back(curr);
+
+        //inspect the links of the current node if it is not visited
+        std::vector<ADJ_NODE> links = curr->getNodeLinks();
+        for (unsigned int i = 0; i < links.size(); ++i){
+            Node* inspect = std::get<0>(links[i]);
+            if (!visited.count(inspect->getNodeIdent()))
+                clearGraphHelper(inspect, visited, NTDS);
+        }  
+    }
+
+    //clears all nodes in a graph given the head node of that graph
+    void clearGraph(Node* graph_head){
+        //save all nodes in the NTDS vector
+        std::unordered_set<ull> visited;
+        std::vector<Node*> NTDS;
+        clearGraphHelper(graph_head, visited, NTDS);
+
+        //free all nodes 
+        for (unsigned int i = 0; i < NTDS.size(); ++i)
+            delete NTDS[i];
+    }
+
+    //deconstructor deletes every node for all the graphs
+    ~Graph(){
+       for (unsigned int i=0; i < all_graphs.size(); i++){
+            if (all_graphs[i] != NULL)
+                clearGraph(all_graphs[i]);
+       } 
     }
 };

@@ -29,9 +29,8 @@ int main(){
         window.draw(circle);
         window.display();
     } */
-
     Graph mygraph;
-    //Test UpdateLinkWeight
+    /* //Test UpdateLinkWeight
     //Worked
     mygraph.createNewNode();    //0
     mygraph.createNewNode();    //1
@@ -39,12 +38,12 @@ int main(){
     std::cout << "~1\n";
     mygraph.joinNodes(0, 1, 10);
     mygraph.displayLinkWeight(0, 1);
-    std::cout << "~2\n";
-    mygraph.updateNodeLink(1, 0, 30);
+    // std::cout << "~2\n";
+     mygraph.updateNodeLink(1, 0, 30);
     mygraph.displayLinkWeight(0, 1);
     std::cout << "~3\n";
     mygraph.updateNodeLink(0, 1, 900);
-    mygraph.displayLinkWeight(0, 1);
+    mygraph.displayLinkWeight(0, 1); */
 
 
     /*
@@ -153,7 +152,7 @@ int main(){
     //Testing deletion of nodes
         //Test case 1: NTD(node to delete) is head in graph and no children
             //v2.0 WORKS
-        /* mygraph.createNewNode();    //0
+        mygraph.createNewNode();    //0
         mygraph.createNewNode();    //1
         mygraph.createNewNode();    //2
         mygraph.createNewNode();    //3
@@ -184,14 +183,14 @@ int main(){
         } 
         mygraph.REVISEDdeleteNode(1);
         mygraph.REVISEDdeleteNode(3);
-        std::cout<<"8 All graphs size: " << mygraph.getNumGraphs() <<'\n';
+        /* std::cout<<"8 All graphs size: " << mygraph.getNumGraphs() <<'\n';
         fn = mygraph.REVISEDfindNode(1);
         std::cout << "\nCheck\n";
         if (fn != NULL){
             std::cout << "Found Node: " << fn->getNodeIdent() <<'\n'; 
         }else{
             std::cout << "Node not found - incorrect\n";
-        }  */
+        } */ 
 
         //Test case 2: NTD is head and and no node in graph is connected with each other
             //Found bug with joining node after deleting NTD
