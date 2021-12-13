@@ -277,7 +277,6 @@ public:
     }
 
     //runs DFS and changes nodes identifier's to the new_loc in all_graph
-    //Only changes 
     void moveGraphLoconDelete(unsigned int new_loc, Node* curr, std::unordered_set<ull>& visited, std::unordered_map<ull, bool>& nodechanged){
         //mark current node as visited
         visited.insert(curr->getNodeIdent());
@@ -327,7 +326,7 @@ public:
                 exit(EXIT_FAILURE);
             }
 
-            //update node 2's node_loc to be the same as node 1
+            //update node 2's node_loc to be the same as node 1 if it isn't already
             if (loc1 != loc2){
                 std::unordered_set<ull> visited;
                 //update node_locs map for the graph thats getting moved
@@ -585,38 +584,46 @@ public:
         }
     }
 
-    //helper function for clearGraph that saves all nodes in the graph recursively into NTDS
-    void clearGraphHelper(Node* curr, std::unordered_set<ull>& visited, std::vector<Node*>& NTDS){
-        //save current node in NTDS and mark it as visited
-        visited.insert(curr->getNodeIdent());
-        NTDS.push_back(curr);
+    //helper function for eraseGraph that uses visited set in order to recursively delete all nodes in a graph
+    void eraseGraphHelper(Node* curr, std::unordered_set<Node*>& visited){
+        std::cout << "\tNode " << curr->getNodeIdent() << " has been visited\n";
+        //mark current node as visited
+        visited.insert(curr);
 
-        //inspect the links of the current node if it is not visited
+        //inspect the links of the current node if they are not visited
         std::vector<ADJ_NODE> links = curr->getNodeLinks();
         for (unsigned int i = 0; i < links.size(); ++i){
             Node* inspect = std::get<0>(links[i]);
-            if (!visited.count(inspect->getNodeIdent()))
-                clearGraphHelper(inspect, visited, NTDS);
-        }  
+
+            //check if inspect still exists
+
+            if (!visited.count(inspect)){
+                std::cout << "\t\tinspecting Node: " << inspect->getNodeIdent() << "\n";
+                eraseGraphHelper(inspect, visited);
+            }
+        } 
+        
+        //after all current links have been visited delete memory of current node
+        std::cout << "\tdeleting Node: " << curr->getNodeIdent() << std::endl;
+        delete curr;
+        // curr = NULL;
+        
     }
+    
+    //erases all nodes in a graph given the head node of that graph
+    void eraseGraph(Node* graph_head){
+        //set to mark nodes as visited
+        std::unordered_set<Node*> visited;
 
-    //clears all nodes in a graph given the head node of that graph
-    void clearGraph(Node* graph_head){
-        //save all nodes in the NTDS vector
-        std::unordered_set<ull> visited;
-        std::vector<Node*> NTDS;
-        clearGraphHelper(graph_head, visited, NTDS);
-
-        //free all nodes 
-        for (unsigned int i = 0; i < NTDS.size(); ++i)
-            delete NTDS[i];
+        //erase entire graph
+        eraseGraphHelper(graph_head, visited);
     }
 
     //deconstructor deletes every node for all the graphs
     ~Graph(){
        for (unsigned int i=0; i < all_graphs.size(); i++){
             if (all_graphs[i] != NULL)
-                clearGraph(all_graphs[i]);
+                eraseGraph(all_graphs[i]);
        } 
     }
 };

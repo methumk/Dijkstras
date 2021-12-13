@@ -1,6 +1,9 @@
 #include <iostream>
 #include <SFML/Graphics.hpp>
 #include "structure.hpp"
+#include <chrono>
+
+using namespace std::chrono;
 
 
 int main(){
@@ -29,7 +32,33 @@ int main(){
         window.draw(circle);
         window.display();
     } */
+
+
+
     Graph mygraph;
+
+    //Testing memory leaks from graph
+    mygraph.createNewNode();    //0
+    mygraph.createNewNode();    //1
+    mygraph.createNewNode();    //2
+    mygraph.createNewNode();    //3
+    mygraph.createNewNode();    //4
+    mygraph.createNewNode();    //5
+    mygraph.createNewNode();    //6
+    mygraph.createNewNode();    //7
+    mygraph.createNewNode();    //8
+    mygraph.createNewNode();    //9
+
+    mygraph.joinNodes(0, 1, 20);
+    mygraph.joinNodes(0, 2, 20);
+    mygraph.joinNodes(3, 1, 20);
+    mygraph.joinNodes(2, 1, 20);
+    mygraph.joinNodes(4, 5, 20);
+    mygraph.joinNodes(6, 7, 20);
+    mygraph.joinNodes(0, 7, 20);
+    mygraph.joinNodes(4, 7, 20);
+    mygraph.joinNodes(8, 9, 20);
+
     /* //Test UpdateLinkWeight
     //Worked
     mygraph.createNewNode();    //0
@@ -152,7 +181,7 @@ int main(){
     //Testing deletion of nodes
         //Test case 1: NTD(node to delete) is head in graph and no children
             //v2.0 WORKS
-        mygraph.createNewNode();    //0
+        /* mygraph.createNewNode();    //0
         mygraph.createNewNode();    //1
         mygraph.createNewNode();    //2
         mygraph.createNewNode();    //3
@@ -182,7 +211,7 @@ int main(){
             std::cout << "Node not found - incorrect\n";
         } 
         mygraph.REVISEDdeleteNode(1);
-        mygraph.REVISEDdeleteNode(3);
+        mygraph.REVISEDdeleteNode(3); */
         /* std::cout<<"8 All graphs size: " << mygraph.getNumGraphs() <<'\n';
         fn = mygraph.REVISEDfindNode(1);
         std::cout << "\nCheck\n";
