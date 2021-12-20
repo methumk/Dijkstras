@@ -1,40 +1,86 @@
 #include <iostream>
+#include <functional>
 #include <SFML/Graphics.hpp>
-#include "structure.hpp"
+#include <SFML/System.hpp>
+#include "gui.hpp"
 #include <chrono>
+#include <unistd.h>
+#include <fcntl.h>
 
 using namespace std::chrono;
 
+sf::Mutex renderMutex;
+bool rendering = true;
+
+void renderThread(sf::RenderWindow* win, Gui* game){
+    //renderMutex.lock();
+    while(rendering && win->isOpen()){
+        game->renderAllGraphs(win);
+    }
+    //renderMutex.unlock();
+}
+
+void mousePos(sf::RenderWindow* window){
+    while(window->isOpen()){
+        sf::Vector2i mpos = sf::Mouse::getPosition(*window);
+        std::cout << mpos.x << " " << mpos.y << std::endl;
+        sf::sleep(sf::milliseconds(2000));
+    }
+}
+
 
 int main(){
-    /* int win_width = 1200;
+    int win_width = 1200;
     int win_height = 750;
-    sf::RenderWindow window(sf::VideoMode(win_width, win_height), "Dijkstra", sf::Style::Close | sf::Style::Resize);
+    sf::RenderWindow window(sf::VideoMode(win_width, win_height), "Dijkstra", sf::Style::Close);
+    //window.setActive(false);
 
-    sf::CircleShape circle;
-    circle.setRadius(30);
-    circle.setOrigin(30, 30);
-    circle.setPosition(win_height/2, win_height/2);
-    circle.setFillColor(sf::Color::Red);
-    circle.setOutlineColor(sf::Color::Green);
-    circle.setOutlineThickness(2.f);
+    Gui game(&window);
+    // sf::Thread t1(std::bind(&renderThread, &window, &game));
+    // t1.launch();
+    // sf::Thread mp(&mousePos, &window);
+    // mp.launch();
+
     while(window.isOpen()){
         sf::Event event; 
             while(window.pollEvent(event)){
                 switch (event.type){
                     case sf::Event::Closed:
                         window.close();
+                        
+                        break;
+                    case sf::Event::MouseButtonPressed:  
+                        if (sf::Mouse::isButtonPressed(sf::Mouse::Right)){
+                            sf::Vector2i pos = sf::Mouse::getPosition(window);
+                            std::cout << "node created at position: " << win_width*pos.y + pos.x <<  " \n";
+                            game.addNode(&window);
+
+                        }else if (sf::Mouse::isButtonPressed(sf::Mouse::Left)){
+                            game.onNodeLeftClick(&window);
+                        }
+                        
+                        break;
+                    case sf::Event::KeyPressed:
+                        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)){
+                            game.clearScreen();
+                        }
                         break;
                 }
             }
 
-        window.clear();
-        window.draw(circle);
-        window.display();
-    } */
+        
+        game.renderAllGraphs(&window);
+    }
 
 
+    //sGraph mygraph;
 
+/* 
+    //testing that reviseddelete works properly - makes new graphs if needed
+    //works
+    int fd = open("./Dijkstras/saveout.txt", O_WRONLY | O_CREAT, 0644);
+    int saveout = dup(1);
+    int rfd = dup2(fd, 1);
     Graph mygraph;
 
     //Testing memory leaks from graph
@@ -51,13 +97,34 @@ int main(){
 
     mygraph.joinNodes(0, 1, 20);
     mygraph.joinNodes(0, 2, 20);
-    mygraph.joinNodes(3, 1, 20);
-    mygraph.joinNodes(2, 1, 20);
-    mygraph.joinNodes(4, 5, 20);
-    mygraph.joinNodes(6, 7, 20);
-    mygraph.joinNodes(0, 7, 20);
-    mygraph.joinNodes(4, 7, 20);
+    mygraph.joinNodes(2, 7, 20);
+    mygraph.joinNodes(0, 3, 20);
+    mygraph.joinNodes(1, 8, 20);
     mygraph.joinNodes(8, 9, 20);
+    mygraph.joinNodes(4, 5, 20);
+    mygraph.joinNodes(4, 6, 20);
+    mygraph.joinNodes(5, 6, 20);
+
+    fflush(stdout);
+    close(fd);
+    int crfd = dup2(saveout, 1);
+    close(saveout);
+
+    std::cout.setstate(std::ios_base::failbit);
+    mygraph.REVISEDdeleteNode(4);
+    std::cout.clear();
+
+    for (int i=0; i < 10; ++i){
+        if (i != 4){
+            std::cout.setstate(std::ios_base::failbit);
+            Node* n = mygraph.REVISEDfindNode(i);
+            std::cout.clear();
+            if (n){
+                std::cout << "node: " << n->getNodeIdent() << " found at location: " << mygraph.getAllGraphsPos(n->getNodeIdent()) << std::endl;
+            }
+        }
+    } */
+
 
     /* //Test UpdateLinkWeight
     //Worked

@@ -11,9 +11,11 @@ structure.hpp
 #include <tuple>
 #include <unordered_map>
 #include <unordered_set>
+#include <string>
 
 //Define ull for identifiers
 typedef unsigned long long ull;
+#define NODE_RADIUS 30
 
 
 /*
@@ -30,9 +32,39 @@ private:
     ull ident;                              //Nodes identifying number
     std::vector<ADJ_NODE> links;            //The nodes connections: vector of tuples<node, link weight, node identifier>
     sf::CircleShape GUInode;
+    sf::Text id;
 public:
     Node(){}
     Node(ull i): ident(i){}
+    Node(ull i, sf::Vector2f pos, sf::Font& font){
+        ident = i;
+
+        //set information about gui node
+        GUInode.setRadius(NODE_RADIUS);
+        GUInode.setOrigin(NODE_RADIUS, NODE_RADIUS);
+        GUInode.setPosition(pos);
+        GUInode.setFillColor(sf::Color::Blue);
+        GUInode.setOutlineColor(sf::Color::White);
+        GUInode.setOutlineThickness(2.f);
+
+        //set inofrmation about node text
+        id.setFont(font);
+        id.setString(std::to_string(ident));
+        id.setCharacterSize(18);
+        id.setOrigin(id.getLocalBounds().width/2., id.getLocalBounds().height/2.);
+        id.setPosition(pos);
+        id.setFillColor(sf::Color::Red);  
+    }   
+
+    //renders individual node and text
+    void renderNode(sf::RenderWindow* win){
+        win->draw(GUInode);       
+        win->draw(id); 
+    }
+
+    inline void moveNode(sf::Vector2f pos){
+        GUInode.setPosition(pos);
+    }
 
     //creates the node for node visualization in the GUI
     void addNodeShape(float radius, sf::Vector2f& pos, sf::Color color){
@@ -112,6 +144,11 @@ public:
             }
         }
     }
+
+    //returns the position of the node
+    inline sf::Vector2f getNodePos(){
+        return GUInode.getPosition();
+    }
 };
 
 
@@ -126,15 +163,47 @@ class Graph{
 private:
     typedef std::tuple<Node*, unsigned int, ull> ADJ_NODE;
     size_t num_graphs;
-    ull curr_node_ident;                                    //used to create a new unique node identifier
-    ull curr_link_ident;                                    //used to create a new unique link identifier
-    std::vector<Node*> all_graphs;                          //vector containing all graphs
-    std::unordered_map<ull, unsigned int> node_locs;        //For node_locs: <Node identifier, all_graphs index>                       
-    std::vector<unsigned int> open_locs;                    //Keeps track of indices in all_graphs that are null
+    ull curr_node_ident;                                            //used to create a new unique node identifier
+    ull curr_link_ident;                                            //used to create a new unique link identifier
+    std::vector<Node*> all_graphs;                                  //vector containing all graphs
+    std::unordered_map<ull, unsigned int> node_locs;                //<Node identifier, all_graphs index> Keeps track of a nodes location in all_graphs                  
+    std::vector<unsigned int> open_locs;                            //Keeps track of indices in all_graphs that are null
+    Node** node_ilocs;
+    size_t win_width, win_height;
     //NOT YET IMPLEMENTED: Keeps track of open cells in all_graphs (might implement later - to deal with all_graphs space usage)
     //std::unordered_set<unsigned int> open_locs;
 public:
     Graph(): curr_node_ident(0), curr_link_ident(0), num_graphs(0){};
+
+    Graph(const sf::RenderWindow* win): curr_node_ident(0), curr_link_ident(0), num_graphs(0){
+        //initialize node interface location array
+        size_t i_size = win->getSize().x*win->getSize().y;
+        node_ilocs = new Node*[i_size];
+        for (size_t i=0; i < i_size; ++i)
+            node_ilocs[i] = NULL;
+
+        //save window dimensions
+        win_width = win->getSize().x;
+        win_height = win->getSize().y;
+        std::cout << "interface max size: " << i_size << std::endl;
+    };
+
+    //gets the head node of a graph at index i
+    inline Node* getGraphHead(unsigned int i){
+        return all_graphs[i];
+    }
+    
+    inline unsigned int getAllGraphSize(){
+        return all_graphs.size();
+    }
+    
+    //checks if a node exists and returns the position of a node in all_graphs 
+    inline unsigned int getNodeGraphsPos(ull ident){
+        if (node_locs.count(ident))
+            return node_locs[ident];
+        else
+            return -1;
+    }
 
     //returns a valid Node identifier and updates next available identifier
     inline ull getNewNodeIdent(){
@@ -159,6 +228,10 @@ public:
     //returns total number of existing graphs
     inline size_t getNumGraphs(){
         return num_graphs;
+    }
+
+    inline Node** getNodeIlocs(){
+        return node_ilocs;
     }
 
     //Runs a depth first search on the graph to find node with the given identifier (Returns NULL if node was not in the graph)
@@ -242,6 +315,40 @@ public:
         }else{
             all_graphs[openidx] = new Node(ident);
             node_locs.emplace(ident, openidx);
+        }
+        num_graphs++;
+    }
+
+    //creates a new individual node and implants it as its own graph at position pos
+    void createNewNode(sf::Vector2i pos, sf::Font& font){
+        size_t iloc = pos.y*win_width + pos.x;
+        ull ident = getNewNodeIdent();
+        int openidx = -1;
+        //search for open index in all_graphs
+        for (size_t i=0; i < all_graphs.size(); ++i){
+            if (all_graphs[i] == NULL){
+                openidx = i;
+                break;
+            }
+        }
+
+        //if there are no open spaces in all_graphs append the new node
+        //otherwise append in found open spot
+        Node* nn = new Node(ident, sf::Vector2f(pos), font);
+        if (openidx == -1){
+            all_graphs.push_back(nn);
+            node_locs.emplace(ident, all_graphs.size()-1);
+        }else{
+            all_graphs[openidx] = nn;
+            node_locs.emplace(ident, openidx);
+        }
+        
+        //store location of node in the interface
+        if (node_ilocs[iloc] == NULL){
+            node_ilocs[iloc] = nn;
+        }else{
+            std::cout << "adding to iloc: " << iloc << " is not null - EXITING\n";
+            exit(EXIT_FAILURE);
         }
         num_graphs++;
     }
@@ -363,6 +470,10 @@ public:
 
     }
 
+    //unjoins two nodes
+    void unJoinNodes(){
+
+    }
 
     //given a node identifier, will delete that node and fix the (possibly) broken graph structure
     void REVISEDdeleteNode(ull NTDident){
@@ -373,6 +484,9 @@ public:
         }
         
         Node* NTD = REVISEDfindNode(NTDident);
+        sf::Vector2i npos= sf::Vector2i(NTD->getNodePos());
+        size_t ipos = win_width*npos.y + npos.x;
+
         //Try and check to see if Node to delete (NTD) was found
         if (!NTD){
             std::cout << "ERROR in graph.deleteNodes: node to be removed not found EXITING\n";
@@ -414,7 +528,7 @@ public:
                 std::cout << "DELETEnode: \n\tCreating new graph for node: " << child->getNodeIdent() << " curr loc: " << node_locs[child->getNodeIdent()] << '\n';
                 std::cout << "\tCurr graphs: " << num_graphs << " - node going to index: " << newpos << std::endl;
                 std::unordered_set<ull> visited;
-                //change the nodes in the graph to position num_graphs+1
+                //change the nodes in the graph to the new position
                 moveGraphLoconDelete(newpos, child, visited, nodechanged);
 
                 //make current child the head of the new graph
@@ -438,7 +552,9 @@ public:
         node_locs.erase(NTDident);
         delete NTD;
         all_graphs[NTDloc] = NULL;
+        node_ilocs[ipos] = NULL;
         num_graphs--;
+
         //record NTDloc as open
         open_locs.push_back(NTDloc);
     }
@@ -595,8 +711,6 @@ public:
         for (unsigned int i = 0; i < links.size(); ++i){
             Node* inspect = std::get<0>(links[i]);
 
-            //check if inspect still exists
-
             if (!visited.count(inspect)){
                 std::cout << "\t\tinspecting Node: " << inspect->getNodeIdent() << "\n";
                 eraseGraphHelper(inspect, visited);
@@ -606,12 +720,13 @@ public:
         //after all current links have been visited delete memory of current node
         std::cout << "\tdeleting Node: " << curr->getNodeIdent() << std::endl;
         delete curr;
-        // curr = NULL;
+        curr = NULL;
         
     }
     
     //erases all nodes in a graph given the head node of that graph
     void eraseGraph(Node* graph_head){
+        std::cout << "\n\nErasing Graph\n";
         //set to mark nodes as visited
         std::unordered_set<Node*> visited;
 
@@ -619,11 +734,16 @@ public:
         eraseGraphHelper(graph_head, visited);
     }
 
-    //deconstructor deletes every node for all the graphs
-    ~Graph(){
-       for (unsigned int i=0; i < all_graphs.size(); i++){
+    //erases every node in all of the graphs
+    void eraseAllGraphs(){
+        for (unsigned int i=0; i < all_graphs.size(); i++){
             if (all_graphs[i] != NULL)
                 eraseGraph(all_graphs[i]);
-       } 
+       }
+    }
+
+    //deconstructor deletes every node for all the graphs
+    ~Graph(){
+       eraseAllGraphs();
     }
 };
