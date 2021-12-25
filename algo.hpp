@@ -12,7 +12,7 @@ public:
     //map<curr node identifier, tuple<distance from node to curr node, from node identifier>>
     typedef std::unordered_map<ull, std::tuple<long long, ull>> weight_map;
     //typedef for node links
-    typedef std::tuple<Node*, unsigned int, ull> ADJ_NODE;
+    typedef std::tuple<Node*, size_t, ull> ADJ_NODE;
 public:
 
     void nodesToWM(Node* curr, std::unordered_set<Node*>& visited, weight_map& wm){
@@ -22,7 +22,7 @@ public:
 
         std::vector<ADJ_NODE> links = curr->getNodeLinks();
         //add nodes to the weight map if they aren't already visited
-        for(unsigned int i=0; i < links.size(); ++i){
+        for(size_t i=0; i < links.size(); ++i){
             Node* inspect = std::get<0>(links[i]);
             if (!visited.count(inspect))
                 nodesToWM(inspect, visited, wm);
@@ -36,7 +36,7 @@ public:
         std::cout << "Running Dijkstra\n";
     
         //find graph location of node
-        unsigned int graph_loc = graphs.getNodeGraphsPos(start_node->getNodeIdent());
+        size_t graph_loc = graphs.getNodeGraphsPos(start_node->getNodeIdent());
         if (graph_loc == -1) perror("\t\tDijkstra  - graph pos not found - exiting");
 
         weight_map wm;

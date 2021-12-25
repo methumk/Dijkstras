@@ -28,19 +28,22 @@ void mousePos(sf::RenderWindow* window){
     }
 }
 
+#define SIMUL 1
 
 int main(){
+#if SIMUL
     int win_width = 1200;
     int win_height = 750;
     sf::RenderWindow window(sf::VideoMode(win_width, win_height), "Dijkstra", sf::Style::Close);
     //window.setActive(false);
 
-    Gui game(&window);
+    Gui game(win_width, win_height);
     // sf::Thread t1(std::bind(&renderThread, &window, &game));
     // t1.launch();
     // sf::Thread mp(&mousePos, &window);
     // mp.launch();
 
+    static bool leftPressed = false, rigthPressed = false, middlePressed = false;
     while(window.isOpen()){
         sf::Event event; 
             while(window.pollEvent(event)){
@@ -51,14 +54,22 @@ int main(){
                         break;
                     case sf::Event::MouseButtonPressed:  
                         if (sf::Mouse::isButtonPressed(sf::Mouse::Right)){
-                            sf::Vector2i pos = sf::Mouse::getPosition(window);
-                            std::cout << "node created at position: " << win_width*pos.y + pos.x <<  " \n";
                             game.addNode(&window);
-
+                            
                         }else if (sf::Mouse::isButtonPressed(sf::Mouse::Left)){
+                            std::cout << "\tLeft is pressed\n";
+                            leftPressed = true;
                             game.onNodeLeftClick(&window);
                         }
                         
+                        break;
+                    case sf::Event::MouseButtonReleased:
+                        if (event.mouseButton.button == sf::Mouse::Left){
+                            //delete node, when delete button toggled
+                            //game.onNodeLeftClick(&window);
+                            std::cout << "\tLeft is released\n";
+                            leftPressed = false;
+                        }
                         break;
                     case sf::Event::KeyPressed:
                         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)){
@@ -67,13 +78,12 @@ int main(){
                         break;
                 }
             }
-
         
         game.renderAllGraphs(&window);
     }
 
-
-    //sGraph mygraph;
+#else
+    //Graph mygraph;
 
 /* 
     //testing that reviseddelete works properly - makes new graphs if needed
@@ -324,7 +334,7 @@ int main(){
         //Test case 4: NTD is not head and has no other link beside head
         //Test case 5: NTD is not head and has other links that are only connected to NTD
         //Test case 6: NTD is not head and has other links that connect to the head
-       
+#endif
 
     return 0;
 }

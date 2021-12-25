@@ -23,21 +23,26 @@ public:
         allgraphs = new Graph;
     }
 
-    Gui(const sf::RenderWindow* win){
+    Gui(const int& w_width, const int& w_height){
         //try to load in font needed to display text
         if (!font.loadFromFile("./Dijkstras/OpenSans-Semibold.ttf")){
             std::cerr << "GUI CONSTRUCTOR - Error while loading font - EXITING\n";
             exit(EXIT_FAILURE);
         }
 
-        allgraphs = new Graph(win);
-        win_width = win->getSize().x;
-        win_height = win->getSize().y;
+        win_width = w_width;
+        win_height = w_height;
+        allgraphs = new Graph(win_width, win_height);
     }
 
-    //creates a new node
+    //attempts to create a new node displayed on the interface
     void addNode(const sf::RenderWindow* win){
-        allgraphs->createNewNode(sf::Mouse::getPosition(*win), font);
+        //adds node if new node doesn't overlap with existing nodes
+        if (!mouseOverNode(win, NODE_RADIUS*2)){
+            sf::Vector2i pos = sf::Mouse::getPosition(*win);
+            std::cout << "2 - node created at position: " << win_width*pos.y + pos.x << " x: " << pos.x << " y: " << pos.y << '\n';
+            allgraphs->createNewNode(pos, font);
+        }
     }
 
     //returns the euclidean distance between two integer points
@@ -45,38 +50,47 @@ public:
         return sqrt((p1.x-p2.x)*(p1.x-p2.x) + (p1.y-p2.y)*(p1.y-p2.y));
     }
 
-    //check if the mouse position is within a node boundary
-    bool withinBoundary(Node* n, const sf::Vector2i& mpos){
+    //check if the mouse position is within a node boundary and the radius distance
+    bool withinBoundary(Node* n, const sf::Vector2i& mpos, size_t node_radius){
         sf::Vector2i npos = sf::Vector2i(n->getNodePos());
-        if (euclidDist(npos, mpos) <= NODE_RADIUS && 
-            ((npos.x+NODE_RADIUS >= mpos.x) && (npos.x-NODE_RADIUS <= mpos.x)) && 
-            ((npos.y+NODE_RADIUS >= mpos.y) && (npos.y-NODE_RADIUS <= mpos.y))){
-            
+
+        int node_xs = npos.x-node_radius, node_xe = npos.x+node_radius;
+        int node_ys = npos.y-node_radius, node_ye = npos.y+node_radius;
+        if (node_xs < 0) node_xs = 0;
+        if (node_ys < 0) node_ys = 0;
+        if (node_xe >= win_width) node_xe = win_width-1;
+        if (node_ye >= win_height) node_ye = win_height-1;
+
+        if (euclidDist(npos, mpos) <= node_radius && 
+            ((node_xs <= mpos.x) && (mpos.x <= node_xe)) && 
+            ((node_ys <= mpos.y) && (mpos.y <= node_ye))){
             return true;
         }
         return false;
     }
 
     //checks a reduced range based on the mouse position to determine if the mouse is over a node
-    Node* mouseOverNode(const sf::RenderWindow* win){
+    Node* mouseOverNode(const sf::RenderWindow* win, size_t node_radius){
         Node** iloc = allgraphs->getNodeIlocs();
         sf::Vector2i mpos = sf::Mouse::getPosition(*win);
 
-        //determine where to start looking for the node
-        int ys = mpos.y-NODE_RADIUS, ye=mpos.y+NODE_RADIUS;
-        int xs = mpos.x-NODE_RADIUS, xe=mpos.x+NODE_RADIUS;
-        if (ys < 0) ys = 0;
-        if (xs < 0) xs = 0;
-        if (xe >= win_width) xe = win_width-1;
-        if (ye >= win_height) ye = win_height-1;
-        
         //determine if mouse is over valid range
         if (mpos.x >= 0 && mpos.y >=0){
+            //determine where to start looking for the node
+            int ys = mpos.y-node_radius, ye=mpos.y+node_radius;
+            int xs = mpos.x-node_radius, xe=mpos.x+node_radius;
+            if (ys < 0) ys = 0;
+            if (xs < 0) xs = 0;
+            if (xe >= win_width) xe = win_width-1;
+            if (ye >= win_height) ye = win_height-1;
+            
+            std::cout << "1 - Searched\n" << "\tyStart: " << ys << " yEnd: " << ye << "\n\txStart: " << xs << " xEnd: " << xe << '\n';
+            
             //search the interface reduced range
             for (int y = ys; y <= ye; ++y){
                 for (int x = xs; x <= xe; ++x){
-                    int idx = x + win_width*y;
-                    if (iloc[idx] != NULL && withinBoundary(iloc[idx], mpos))
+                    int idx = win_width*y + x;
+                    if (iloc[idx] != NULL && withinBoundary(iloc[idx], mpos, node_radius))
                         return iloc[idx];
                 }
             }
@@ -87,7 +101,7 @@ public:
 
     //determines if a node was clicked on by the left button and finds it
     void onNodeLeftClick(const sf::RenderWindow* win){
-        Node* mouse_on_node = mouseOverNode(win);
+        Node* mouse_on_node = mouseOverNode(win, NODE_RADIUS);
         if (mouse_on_node){
             std::cout << "Currently over node: " << mouse_on_node->getNodeIdent() <<'\n';
         }else{
@@ -95,14 +109,28 @@ public:
         }
     }
 
+    //updates the node position the left mouse button is pressing on to a dragged postion
+    void onDragNode(const sf::RenderWindow* win){
+        Node* mouse_on_node = mouseOverNode(win, NODE_RADIUS);
+        if (mouse_on_node){
+            std::cout << "Currently over node: " << mouse_on_node->getNodeIdent() <<'\n';
+            //FIX: drag shouldn't make node origin move to mouse position, should move to drag offset
+            mouse_on_node->moveNode(sf::Mouse::getPosition(*win));
+        }
+    }
+    
     void renderAllGraphs(sf::RenderWindow* win){
         win->clear();
-        unsigned int ags = allgraphs->getAllGraphSize();
-        for (unsigned int i=0; i < ags; ++i){
+
+        size_t ags = allgraphs->getAllGraphSize();
+        for (size_t i=0; i < ags; ++i){
             Node* gh = allgraphs->getGraphHead(i);
             if (gh != NULL)
-                gh->renderNode(win);
+                gh->drawNode(win);
         }
+
+        allgraphs->drawAllLinks(win);
+
         win->display();
     }
 
@@ -110,7 +138,7 @@ public:
     void clearScreen(){
         //allgraphs->eraseAllGraphs();
         delete allgraphs;
-        allgraphs = new Graph;
+        allgraphs = new Graph(win_width, win_height);
     }
 
     ~Gui(){
