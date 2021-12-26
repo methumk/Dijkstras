@@ -13,16 +13,6 @@ private:
     sf::Font font;
     size_t win_width, win_height;
 public:
-    Gui(){
-        //try to load in font needed to display text
-        if (!font.loadFromFile("./Dijkstras/OpenSans-Semibold.ttf")){
-            std::cerr << "GUI CONSTRUCTOR - Error while loading font - EXITING\n";
-            exit(EXIT_FAILURE);
-        }
-
-        allgraphs = new Graph;
-    }
-
     Gui(const int& w_width, const int& w_height){
         //try to load in font needed to display text
         if (!font.loadFromFile("./Dijkstras/OpenSans-Semibold.ttf")){
@@ -119,24 +109,35 @@ public:
         }
     }
     
+    //attempt to link two not Null and different nodes with each other
+    void linkNodes(Node* n1, Node* n2){
+        //check that nodes being joined aren't the same
+        if (n1 != n2 && n1 != NULL && n2 != NULL){
+            //have gui ask for node link weight
+            int link_weight;
+            allgraphs->joinNodes(n1, n2, 20);
+        }
+    }
+    
     void renderAllGraphs(sf::RenderWindow* win){
         win->clear();
 
+        allgraphs->drawAllLinks(win);
         size_t ags = allgraphs->getAllGraphSize();
         for (size_t i=0; i < ags; ++i){
-            Node* gh = allgraphs->getGraphHead(i);
-            if (gh != NULL)
-                gh->drawNode(win);
+            // Node* gh = allgraphs->getGraphHead(i);
+            // if (gh != NULL){
+            //     gh->drawNode(win);
+            // }
+            allgraphs->drawAllNodesinGraph(i, win);
         }
 
-        allgraphs->drawAllLinks(win);
 
         win->display();
     }
 
     //clears the entire screen of nodes and links
     void clearScreen(){
-        //allgraphs->eraseAllGraphs();
         delete allgraphs;
         allgraphs = new Graph(win_width, win_height);
     }

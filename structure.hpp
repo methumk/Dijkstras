@@ -77,12 +77,12 @@ public:
     }
 
     //add a new linked up node manually
-    void addNode(Node* addNode, size_t lw, ull li){
+    inline void addLinktoNode(Node* addNode, size_t lw, ull li){
         links.push_back(std::make_tuple(addNode, lw, li));
     }
 
     //add a new linked up node by tuple
-    inline void addNode(ADJ_NODE addNode){
+    inline void addLinktoNode(ADJ_NODE addNode){
         links.push_back(addNode);
     }
 
@@ -170,7 +170,7 @@ private:
     std::unordered_map<ull, size_t> node_locs;                      //<Node identifier, all_graphs index> Keeps track of a nodes location in all_graphs                  
     std::vector<size_t> open_locs;                                  //Keeps track of indices in all_graphs that are null
     Node** node_ilocs;                                              //Keeps track of the location of each node in the window interface
-    sf::VertexArray GUIlinks;                            //Lines used to represent links between nodes on the interface
+    sf::VertexArray GUIlinks;                                       //Lines used to represent links between nodes on the interface
     //NOT YET IMPLEMENTED: Keeps track of open cells in all_graphs (might implement later - to deal with all_graphs space usage)
     //std::unordered_set<size_t> open_locs;
 public:
@@ -186,20 +186,44 @@ public:
         //save window dimensions
         win_width = w_width;
         win_height = w_height;
-        std::cout << "interface max size: " << i_size << std::endl;
 
         //set the primitive type for the interface links
         GUIlinks.setPrimitiveType(sf::Lines);
     };
 
     //creates a new link represented as a ve
-    inline void addNewLink(sf::Vector2i p1, sf::Vector2i p2, sf::Color c){
-        GUIlinks.append(sf::Vertex(sf::Vector2f(p1), c));
-        GUIlinks.append(sf::Vertex(sf::Vector2f(p2), c));
+    inline void addNewLink(sf::Vector2f p1, sf::Vector2f p2, sf::Color c){
+        GUIlinks.append(sf::Vertex(p1, c));
+        GUIlinks.append(sf::Vertex(p2, c));
     }
 
     inline void drawAllLinks(sf::RenderWindow* win){
         win->draw(GUIlinks);
+    }
+
+    //helper of function drawAllNodesinGraph
+    //Runs DFS on graph to draw each node in the given graph
+    void DFSGraphDraw(Node* curr, std::unordered_set<ull>& visited, sf::RenderWindow* win){
+        visited.insert(curr->getNodeIdent());
+        curr->drawNode(win);
+
+        //inspect current node's links if they aren't already visited
+        std::vector<ADJ_NODE> links = curr->getNodeLinks();
+        for (size_t i=0; i < links.size(); ++i){
+            Node* inspect = std::get<0>(links[i]);
+            if (!visited.count(inspect->getNodeIdent())){
+                DFSGraphDraw(inspect, visited, win);
+            }
+        }
+    }
+
+    //draws all nodes in a given graph index
+    void drawAllNodesinGraph(size_t graph_idx, sf::RenderWindow* win){
+        Node* node_head = all_graphs[graph_idx];
+        if (node_head){
+            std::unordered_set<ull> visited;
+            DFSGraphDraw(node_head, visited, win);
+        }
     }
 
     //gets the head node of a graph at index i
@@ -361,7 +385,6 @@ public:
         //store location of node in the interface
         if (node_ilocs[iloc] == NULL){
             node_ilocs[iloc] = nn;
-            std::cout << "\tGraph added at loc: " << iloc << " x: " << pos.x << " y: " << pos.y << '\n';
         }else{
             std::cout << "\tadding to iloc: " << iloc << " is not null - EXITING\n";
             exit(EXIT_FAILURE);
@@ -459,7 +482,7 @@ public:
             }
 
             //Check to see if nodes are connected
-            int alreadyConnected = 0;
+            bool alreadyConnected = 0;
             std::vector<ADJ_NODE> links = n1->getNodeLinks();
             for (size_t i =0; i < links.size(); ++i){
                 Node* check = std::get<0>(links[i]);
@@ -469,11 +492,12 @@ public:
                 }
             }
 
-            //connect the two nodes together if not already conencted
+            //connect the two nodes together if not already connected
             if (!alreadyConnected){
                 ull link_ident = getNewLinkIdent();
-                n1->addNode(n2, link_weight, link_ident);
-                n2->addNode(n1, link_weight, link_ident);
+                n1->addLinktoNode(n2, link_weight, link_ident);
+                n2->addLinktoNode(n1, link_weight, link_ident);
+                addNewLink(n1->getNodePos(), n2->getNodePos(), sf::Color::Green);
             }
 
             //remove graph getting moved from all_graphs if locations are different
@@ -485,6 +509,45 @@ public:
             
         }
 
+    }
+
+    //Join node by Node* values
+    void joinNodes(Node* n1, Node* n2, size_t link_weight){
+        size_t loc1 = node_locs[n1->getNodeIdent()], loc2 = node_locs[n2->getNodeIdent()];
+
+        //update node 2's node_loc to be the same as node 1 if it isn't already
+        if (loc1 != loc2){
+            std::unordered_set<ull> visited;
+            //update node_locs map for the graph thats getting moved
+            moveGraphLoc(loc1, all_graphs[loc2], visited);
+            num_graphs--;
+        }
+
+        //Check to see if nodes are connected
+        bool alreadyConnected = 0;
+        std::vector<ADJ_NODE> links = n1->getNodeLinks();
+        for (size_t i =0; i < links.size(); ++i){
+            Node* check = std::get<0>(links[i]);
+            if (check->getNodeIdent() == n2->getNodeIdent()){
+                alreadyConnected = 1;
+                break;
+            }
+        }
+
+        //connect the two nodes together if not already connected
+        if (!alreadyConnected){
+            ull link_ident = getNewLinkIdent();
+            n1->addLinktoNode(n2, link_weight, link_ident);
+            n2->addLinktoNode(n1, link_weight, link_ident);
+            addNewLink(n1->getNodePos(), n2->getNodePos(), sf::Color::Green);
+        }
+
+        //remove graph getting moved from all_graphs if locations are different
+        //record open position in open_locs
+        if ((loc1 != loc2) && !alreadyConnected){
+            all_graphs[loc2] = NULL;
+            open_locs.push_back(loc2);
+        }
     }
 
     //unjoins two nodes
@@ -765,17 +828,17 @@ public:
     //deconstructor deletes every node for all the graphs
     ~Graph(){
         //eraseAllGraphs();
-        /* std::cout << "Freeing all nodes\n";
+        std::cout << "Freeing all nodes\n";
         for (size_t i=0; i < win_width*win_height; ++i){
             if (node_ilocs[i] != nullptr){
                     std::cout << "\tFreeing node: " << node_ilocs[i]->getNodeIdent() << '\n';
                     delete node_ilocs[i];
                     node_ilocs[i] = NULL;
             }
-        } */
+        }
 
-        for (size_t i=0; i < win_width*win_height; ++i)
-            delete node_ilocs[i];
-        delete [] node_ilocs;
+        // for (size_t i=0; i < win_width*win_height; ++i)
+        //     delete node_ilocs[i];
+        // delete [] node_ilocs;
     }
 };
