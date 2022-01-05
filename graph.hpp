@@ -501,27 +501,7 @@ public:
 
 */
 
-    //runs DFS and changes each identifier's to the new_loc in all_graphs
-    //Arguments(new all_graphs location, graph head to move, set to keep track of visited node)
-    //doesnt update num_graphs after move
-    void moveGraphLoc(size_t new_loc, Node* curr, std::unordered_set<ull>& visited){
-        //mark current node as visited
-        visited.insert(curr->getNodeIdent());
-        //move current node to the new all_graph locs
-        node_locs[curr->getNodeIdent()] = new_loc;
-        //get current node's links list
-        std::vector<ADJ_NODE> links = curr->getNodeLinks();
-
-
-        //check each node in currents links 
-        for (size_t i = 0; i < links.size(); ++i){
-            Node* inspect = std::get<0>(links[i]);
-            if (!visited.count(inspect->getNodeIdent())){
-                moveGraphLoc(new_loc, inspect, visited);
-            }
-        }
-    }
-
+    // runs DFS move the graph so all nodes within that graph are found at new_loc
     void moveGraphLoc(Node* curr, std::unordered_set<ull>& visited, size_t new_loc){
         // change where to find node via node_locs
         ull curr_ident = curr->getNodeIdent();
@@ -537,6 +517,7 @@ public:
         }
     }
 
+    // deletes a given node and updates connected node's positions
     void deleteNode(Node* NTD){
         sf::Vector2i npos= sf::Vector2i(NTD->getNodePos());
         ull NTDident = NTD->getNodeIdent();
