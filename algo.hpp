@@ -3,8 +3,8 @@ algo.hpp
     - The dijkstra algorithm implementation
  */
 #pragma once
-#include "structure.hpp"
 #include <climits>
+#include "graph.hpp"
 
 
 class Dijkstra{

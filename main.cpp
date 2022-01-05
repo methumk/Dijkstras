@@ -2,10 +2,11 @@
 #include <functional>
 #include <SFML/Graphics.hpp>
 #include <SFML/System.hpp>
-#include "gui.hpp"
 #include <chrono>
 #include <unistd.h>
 #include <fcntl.h>
+
+#include "gui.hpp"
 
 using namespace std::chrono;
 
@@ -46,10 +47,10 @@ int main(){
     // sf::Thread mp(&mousePos, &window);
     // mp.launch();
 
-    static bool leftPressed = false, rigthPressed = false, middlePressed = false;
+    static bool leftPressed = false, rigthPressed = false, middlePressed = false, dragging = false;
     static SimulState state = SimulState::AddNodeMode;
-    sf::Vector2i curr_mpos;
-    Node* mouse_clicked_on_node = NULL, *mouse_released_on_node = NULL;
+    sf::Vector2i left_mpos, curr_mpos;
+    Node *right_clicked_on_node = NULL, *left_clicked_on_node = NULL;
     while(window.isOpen()){
         sf::Event event; 
             while(window.pollEvent(event)){
@@ -65,35 +66,38 @@ int main(){
                                 game.addNode(&window);
                             }else if (state == SimulState::AddLinkMode){
                                 //when mouse is clicked on a node, save the node position to mouse_on_node
-                                mouse_clicked_on_node = game.mouseOverNode(&window, NODE_RADIUS);
+                                right_clicked_on_node = game.mouseOverNode(&window, NODE_RADIUS);
+                            }else if (state == SimulState::RemoveNodeMode){
+                                game.removeNode(&window);
                             }
                             
                         }else if (sf::Mouse::isButtonPressed(sf::Mouse::Left)){
                             //Left for dragging
-                            std::cout << "\tLeft is pressed\n";
                             leftPressed = true;
-                            game.onNodeLeftClick(&window);
+                            
+                            left_mpos = sf::Mouse::getPosition(window);
+                            left_clicked_on_node = game.mouseOverNode(&window, NODE_RADIUS);
+                            dragging = true;
+
                         }
                         
                         break;
 
                     case sf::Event::MouseButtonReleased:
                         if (event.mouseButton.button == sf::Mouse::Right){
-                            if (state == SimulState::AddNodeMode){
-                                
-                            }else if (state == SimulState::AddLinkMode){
-                                //if mouse_on_node is not Null
-                                //check if mouse was released over a valid node
-                                //join node if it is valid
-                                mouse_released_on_node = game.mouseOverNode(&window, NODE_RADIUS);
-                                game.linkNodes(mouse_clicked_on_node, mouse_released_on_node);
+                            if (state == SimulState::AddLinkMode){
+                                game.linkNodes(right_clicked_on_node, game.mouseOverNode(&window, NODE_RADIUS));
+                                right_clicked_on_node = NULL;
                             }
 
                         }else if (event.mouseButton.button == sf::Mouse::Left){
                             //delete node, when delete button toggled
                             //game.onNodeLeftClick(&window);
-                            std::cout << "\tLeft is released\n";
+                            //std::cout << "\tLeft is released\n";
                             leftPressed = false;
+                            dragging = false;
+                            if (left_clicked_on_node) std::cout << "was/is on node: " << left_clicked_on_node->getNodeIdent() << '\n';
+                            left_clicked_on_node = NULL;
                         }
                         break;
 
@@ -101,8 +105,6 @@ int main(){
                         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)){
                             game.clearScreen();
                         }else if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)){
-                            //on pressing A
-                            //State toggles between adding node or adding links
                             if (state == SimulState::AddNodeMode){
                                 std::cout << "\n\nMode Activated: Adding links\n";
                                 state = SimulState::AddLinkMode;
@@ -110,15 +112,110 @@ int main(){
                                 std::cout << "\n\nMode Activated: Adding Nodes\n";
                                 state = SimulState::AddNodeMode;
                             }
+                        }else if (sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
+                            if (state == SimulState::RemoveNodeMode){
+                                std::cout << "\n\nMode Activated: Adding Nodes\n";
+                                state = SimulState::AddNodeMode;
+                            }else{
+                                std::cout << "\n\nMode Activated: Removing Nodes\n";
+                                state = SimulState::RemoveNodeMode; 
+                            }
                         }
                         break;
                 }
             }
         
+        game.onDragNode(&window, left_clicked_on_node, left_mpos, dragging);
         game.renderAllGraphs(&window);
     }
 
 #else
+
+    //testing artifacts
+    int win_width = 1200;
+    int win_height = 750;
+    sf::RenderWindow window(sf::VideoMode(win_width, win_height), "Dijkstra", sf::Style::Close);
+    std::vector<sf::Vertex> links2;
+    Links links;
+
+    std::vector<ull> nodes;
+    int node_start = 0;
+
+    while (window.isOpen())
+    {
+        sf::Event event;
+        while (window.pollEvent(event))
+        {
+            switch (event.type){
+                case sf::Event::Closed:
+                    window.close();
+                    
+                    break;
+                case sf::Event::MouseButtonPressed:
+                    if (event.mouseButton.button == sf::Mouse::Right){
+
+                        sf::Vector2f p1 = sf::Vector2f(sf::Mouse::getPosition(window));
+                        sf::Vector2f p2 = p1;
+                        p2.y += 50;
+
+                        //add the link between two nodes
+                        //set the link map between two nodes and set the link index to the last two appended
+                        links.addLink(p1, p2, sf::Color::Red, sf::Color::Red);
+                        std::cout << "link size: " << links.getLinksSize() << "\n";
+                        links.setLinkMap(node_start, node_start+1, links.getLinksSize()-2);
+
+                        nodes.push_back(node_start);
+                        nodes.push_back(node_start+1);
+                        node_start+=2;
+
+                    }else{
+                        if (nodes.size() > 0){
+                            links.removeLink(nodes[1], nodes[0]);
+                            links.removeLinkMap(nodes[0], nodes[1]);
+                            nodes.erase(nodes.begin(), nodes.begin()+2);
+                        }
+                    }
+
+                    break;
+            }
+        }
+
+        window.clear();
+        links.drawLinks(&window);
+
+        //window.draw(links2.data(), links2.size(), sf::Lines);
+        //window.draw(tl.all_links.data(), tl.all_links.size(), sf::Lines);
+        window.display();
+    }
+    
+    
+    // while(window.isOpen()){
+    //     sf::Event event; 
+    //         while(window.pollEvent(event)){
+    //             switch (event.type){
+    //                 case sf::Event::Closed:
+    //                     window.close();
+                        
+    //                     break;
+    //                 case sf::Event::MouseButtonPressed:
+    //                     if (event.mouseButton.button == sf::Mouse::Right){
+    //                         sf::Vector2f p1 = sf::Vector2f(sf::Mouse::getPosition(window));
+    //                         sf::Vector2f p2 = p1;
+    //                         p2.y += 20;
+    //                         links.push_back(sf::Vertex(p1, sf::Color::Blue));
+    //                         links.push_back(sf::Vertex(p2, sf::Color::Blue));
+    //                     }else{
+                            
+    //                     }
+
+    //                     break;
+    //             }
+    //         }
+    //     window.clear();
+    //     window.draw(c);
+    //     window.clear();
+    // }
+                        
     //Graph mygraph;
 
 /* 

@@ -5,7 +5,6 @@ gui.hpp
 */
 #pragma once
 #include "algo.hpp"
-#include <cmath>
 
 class Gui{
 private:
@@ -23,16 +22,6 @@ public:
         win_width = w_width;
         win_height = w_height;
         allgraphs = new Graph(win_width, win_height);
-    }
-
-    //attempts to create a new node displayed on the interface
-    void addNode(const sf::RenderWindow* win){
-        //adds node if new node doesn't overlap with existing nodes
-        if (!mouseOverNode(win, NODE_RADIUS*2)){
-            sf::Vector2i pos = sf::Mouse::getPosition(*win);
-            std::cout << "2 - node created at position: " << win_width*pos.y + pos.x << " x: " << pos.x << " y: " << pos.y << '\n';
-            allgraphs->createNewNode(pos, font);
-        }
     }
 
     //returns the euclidean distance between two integer points
@@ -100,35 +89,54 @@ public:
     }
 
     //updates the node position the left mouse button is pressing on to a dragged postion
-    void onDragNode(const sf::RenderWindow* win){
-        Node* mouse_on_node = mouseOverNode(win, NODE_RADIUS);
-        if (mouse_on_node){
-            std::cout << "Currently over node: " << mouse_on_node->getNodeIdent() <<'\n';
-            //FIX: drag shouldn't make node origin move to mouse position, should move to drag offset
-            mouse_on_node->moveNode(sf::Mouse::getPosition(*win));
+    void onDragNode(const sf::RenderWindow* win, Node* mouse_on_node, sf::Vector2i& prev_mpos, bool& dragging){
+        if (mouse_on_node && dragging){
+                sf::Vector2i curr_mpos = sf::Mouse::getPosition(*win);
+                //std::cout << "\tcurr pos: (" << curr_mpos.x << ", " << curr_mpos.y << ")\tprev pos: (" << prev_mpos.x << ", " << prev_mpos.y << ")\n";
+                if (curr_mpos != prev_mpos){
+                    sf::Vector2i move_offset = curr_mpos - prev_mpos;
+                    std::cout << "\tOFFSET x: " << move_offset.x << " y: " << move_offset.y << '\n';
+                    //mouse_on_node->moveNode(move_offset + sf::Vector2i(mouse_on_node->getNodePos()));
+                    prev_mpos = curr_mpos;
+                }
         }
     }
     
+    //attempts to create a new node displayed on the interface
+    void addNode(const sf::RenderWindow* win){
+        //adds node if new node doesn't overlap with existing nodes
+        if (!mouseOverNode(win, NODE_RADIUS*2)){
+            sf::Vector2i pos = sf::Mouse::getPosition(*win);
+            std::cout << "2 - node created at position: " << win_width*pos.y + pos.x << " x: " << pos.x << " y: " << pos.y << '\n';
+            allgraphs->createNewNode(pos, font);
+        }
+    }
+
+    void removeNode(const sf::RenderWindow* win){
+        Node* NTD = mouseOverNode(win, NODE_RADIUS*2);
+        if (NTD){
+            std::cout << "3 - Deleting node: " << NTD->getNodeIdent() << "\n";
+            allgraphs->REVISEDdeleteNode(NTD);
+        }
+    }
+
     //attempt to link two not Null and different nodes with each other
     void linkNodes(Node* n1, Node* n2){
         //check that nodes being joined aren't the same
-        if (n1 != n2 && n1 != NULL && n2 != NULL){
+        if (n2 != NULL && n1 != NULL && n1 != n2){
             //have gui ask for node link weight
             int link_weight;
             allgraphs->joinNodes(n1, n2, 20);
         }
     }
     
+    //renders all elements of all the graphs
     void renderAllGraphs(sf::RenderWindow* win){
         win->clear();
 
         allgraphs->drawAllLinks(win);
         size_t ags = allgraphs->getAllGraphSize();
         for (size_t i=0; i < ags; ++i){
-            // Node* gh = allgraphs->getGraphHead(i);
-            // if (gh != NULL){
-            //     gh->drawNode(win);
-            // }
             allgraphs->drawAllNodesinGraph(i, win);
         }
 

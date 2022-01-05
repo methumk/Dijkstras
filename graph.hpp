@@ -1,7 +1,9 @@
 /*
-structure.hpp
-    - Contains the structure for a single node
-    - Contains the structure to contain multiple graphs and corresponding functionalities
+Graph class:
+    - vector of all UNJOINED graphs (holds the head of each graph)
+    - if you want to iterate through an individual graph you need to check for already visited nodes (graph traversal)
+    - Merging graphs and updating the all_graphs vector
+    - handle deletion of a Node (what happens to its links)
 */
 #pragma once
 #include <SFML/Graphics.hpp>
@@ -12,153 +14,12 @@ structure.hpp
 #include <unordered_map>
 #include <unordered_set>
 #include <string>
+#include <cmath>
 
-//Define ull for identifiers
-typedef unsigned long long ull;
-#define NODE_RADIUS 30
-
-
-/*
-Node class:
-    - Node identifier
-    - Circle shape??
-    - links (tuple: curr node, link weight, link identifier)
-*/
-class Node{
-public:
-    typedef std::tuple<Node*, size_t, ull> ADJ_NODE;
-    typedef std::vector<ADJ_NODE> NODE_VEC;
-private:
-    ull ident;                              //Nodes identifying number
-    std::vector<ADJ_NODE> links;            //The nodes connections: vector of tuples<node, link weight, node identifier>
-    sf::CircleShape GUInode;                //Circle used to represent node on the interface
-    sf::Text id;                            //Interface text used to identify each node
-public:
-    Node(){}
-    Node(ull i): ident(i){}
-    Node(ull i, sf::Vector2f pos, sf::Font& font) : ident(i){
-        //set information about gui node
-        GUInode.setRadius(NODE_RADIUS);
-        GUInode.setOrigin(NODE_RADIUS, NODE_RADIUS);
-        GUInode.setPosition(pos);
-        GUInode.setFillColor(sf::Color::Blue);
-        GUInode.setOutlineColor(sf::Color::White);
-        GUInode.setOutlineThickness(2.f);
-
-        //set inofrmation about node text
-        id.setFont(font);
-        id.setString(std::to_string(ident));
-        id.setCharacterSize(18);
-        id.setOrigin(id.getLocalBounds().width/2., id.getLocalBounds().height/2.);
-        id.setPosition(pos);
-        id.setFillColor(sf::Color::Red);  
-    }   
-
-    //renders individual node and text
-    void drawNode(sf::RenderWindow* win){
-        win->draw(GUInode);       
-        win->draw(id); 
-    }
-
-    //moves the gui node to a given position
-    inline void moveNode(sf::Vector2i pos){
-        GUInode.setPosition(sf::Vector2f(pos));
-        id.setPosition(sf::Vector2f(pos));
-    }
-
-    //creates the node for node visualization in the GUI
-    void addNodeShape(float radius, sf::Vector2f& pos, sf::Color color){
-        GUInode.setRadius(radius);
-        GUInode.setOrigin(radius, radius);
-        GUInode.setPosition(pos);
-        GUInode.setFillColor(color);
-        GUInode.setOutlineColor(sf::Color::Blue);
-        GUInode.setOutlineThickness(2.f);
-    }
-
-    //add a new linked up node manually
-    inline void addLinktoNode(Node* addNode, size_t lw, ull li){
-        links.push_back(std::make_tuple(addNode, lw, li));
-    }
-
-    //add a new linked up node by tuple
-    inline void addLinktoNode(ADJ_NODE addNode){
-        links.push_back(addNode);
-    }
-
-    inline void printCurrNode(){
-        std::cout << "Node ident: " << ident << '\n';
-    }
-
-    //print all information about nodes connected to current node
-    void printAdjNodes(){
-        for (size_t i = 0; i < links.size(); ++i){
-            Node* hold = std::get<0>(links[i]);
-            std::cout << "Adj Node " << i 
-                        << " ident: " << hold->ident 
-                        << " lw: " << std::get<1>(links[i]) 
-                        << " li: " << std::get<2>(links[i]) 
-                        << '\n';
-        }
-    }
-
-    //returns current nodes identifier
-    inline ull getNodeIdent(){
-        return ident;
-    }
-
-    //returns vector of all nodes connected to current node
-    inline std::vector<ADJ_NODE>& getNodeLinks(){
-        return links;
-    }
-
-    //retrieves node and link information at the given links index
-    inline ADJ_NODE getNodeInfo(size_t i){
-        return links[i];
-    }
-
-    //have to do dfs on graph to find correct identifier
-    //retrieves node and link information at the given node identifier
-    inline ADJ_NODE getNodeInfo(ull i){
-        return links[i];
-    }
-
-    //retrieves Node for a node at the given links index
-    inline Node* getAdjNode(size_t i){
-        return std::get<0>(links[i]);
-    }
-
-    //have to do dfs on graph to find correct identifier
-    //retrieves Node for the node with the given node identifier
-    inline Node* getAdjNode(ull ident){
-        return NULL;
-    }
-
-    //removes current node's link to a given node from its links vector
-    void remLinktoNode(ull ident){
-        for (size_t i=0; i < links.size(); ++i){
-            Node* inspect = std::get<0>(links[i]);
-            if (inspect->getNodeIdent() == ident){
-                links.erase(links.begin()+i);
-                break;
-            }
-        }
-    }
-
-    //returns the position of the node
-    inline sf::Vector2f getNodePos(){
-        return GUInode.getPosition();
-    }
-};
+#include "node.hpp"
+#include "links.hpp"
 
 
-/*
-Graph class:
-    - vector of all UNJOINED graphs (holds the head of each graph)
-    - if you want to iterate through an individual graph you need to check for already visited nodes (graph traversal)
-    - Merging graphs and updating the all_graphs vector
-    - handle deletion of a Node (what happens to its links)
-*/
 class Graph{
 private:
     typedef std::tuple<Node*, size_t, ull> ADJ_NODE;
@@ -167,10 +28,10 @@ private:
     ull curr_node_ident;                                            //used to create a new unique node identifier
     ull curr_link_ident;                                            //used to create a new unique link identifier
     std::vector<Node*> all_graphs;                                  //vector containing all graphs
-    std::unordered_map<ull, size_t> node_locs;                      //<Node identifier, all_graphs index> Keeps track of a nodes location in all_graphs                  
     std::vector<size_t> open_locs;                                  //Keeps track of indices in all_graphs that are null
-    Node** node_ilocs;                                              //Keeps track of the location of each node in the window interface
-    sf::VertexArray GUIlinks;                                       //Lines used to represent links between nodes on the interface
+    std::unordered_map<ull, size_t> node_locs;                      //<Node identifier, all_graphs index> Keeps track of a nodes location in all_graphs                  
+    Node** node_ilocs;                                              //Keeps track of the location of each node in the window interface                     
+    Links GUIlinks;                                                 //Lines used to represent links between nodes on the interface
     //NOT YET IMPLEMENTED: Keeps track of open cells in all_graphs (might implement later - to deal with all_graphs space usage)
     //std::unordered_set<size_t> open_locs;
 public:
@@ -188,17 +49,12 @@ public:
         win_height = w_height;
 
         //set the primitive type for the interface links
-        GUIlinks.setPrimitiveType(sf::Lines);
+        //GUIlinks.setPrimitiveType(sf::Lines);
     };
 
-    //creates a new link represented as a ve
-    inline void addNewLink(sf::Vector2f p1, sf::Vector2f p2, sf::Color c){
-        GUIlinks.append(sf::Vertex(p1, c));
-        GUIlinks.append(sf::Vertex(p2, c));
-    }
-
+    //Draws all links
     inline void drawAllLinks(sf::RenderWindow* win){
-        win->draw(GUIlinks);
+        GUIlinks.drawLinks(win);
     }
 
     //helper of function drawAllNodesinGraph
@@ -224,6 +80,124 @@ public:
             std::unordered_set<ull> visited;
             DFSGraphDraw(node_head, visited, win);
         }
+    }
+
+    //determines if it's legal to move node to a new position
+    void moveNode(Node* node, sf::Vector2f& oldpos, sf::Vector2f& newpos){
+        /* sf::Vector2i move_offset = sf::Vector2i(newpos - oldpos);
+        sf::Vector2i npos = sf::Vector2i(node->getNodePos());
+        bool move_right = move_offset.x > 0? true : false;
+        bool move_down = move_offset.y > 0? true : false;
+        size_t start_pos = npos.y*win_width + npos.x;
+        size_t x_last_empty;
+
+        //boundary check x-axis
+        if (move_right){
+            size_t x_travelled = move_offset.x-1;
+            for (size_t x = start_pos+1; x < (npos.y*win_width + win_width)-NODE_RADIUS && x_travelled >= 0; ++x){
+                if (node_ilocs[x] == NULL){
+                    x_last_empty = x;
+                    x_travelled--;
+                }
+            }
+        }else{
+            if (move_offset.x != 0){
+                if (newpos.x-NODE_RADIUS < 0) newpos.x = NODE_RADIUS;
+            }
+        }
+
+        //boundary check y-axis  
+        if (move_down){
+            if (newpos.y+NODE_RADIUS >= win_height) newpos.y = win_height-NODE_RADIUS;
+        }else{
+            if (move_offset.y != 0){
+                if (newpos.y-NODE_RADIUS < 0) newpos.y = NODE_RADIUS;
+            }
+        } */
+        sf::Vector2i move_offset = sf::Vector2i(newpos - oldpos);
+        bool move_down = move_offset.y > 0? true : false;
+        bool move_right = move_offset.x > 0? true : false;
+        int farthest_empty;
+        sf::Vector2i adjusted_newpos;
+        sf::Vector2i adjusted_offset(0, 0);
+
+        if (move_offset.x == 0){
+            //dragging node only on the y-axis
+            int remaining_ydist = move_offset.y;
+            size_t curr_x = int(oldpos.x);
+            
+            if (move_down){
+                //determine farthest you can go right without interacting border or other node
+                for (size_t y = int(oldpos.y)+1; y < win_height-NODE_RADIUS && remaining_ydist > 0; ++y){
+                    if (node_ilocs[win_width*y + curr_x] == NULL)
+                        farthest_empty = y;
+                    else 
+                        break;
+                    --remaining_ydist;
+                }
+
+                adjusted_offset.y = farthest_empty - int(oldpos.y);
+
+            }else{
+                //determine farthest you can go left without interacting border or other node
+                for (size_t y = int(oldpos.y)-1; y >= 0+NODE_RADIUS && remaining_ydist < 0; --y){
+                    if (node_ilocs[win_width*y + curr_x] == NULL)
+                        farthest_empty = y;
+                    else   
+                        break;
+                    ++remaining_ydist;
+                }
+
+                adjusted_offset.y = int(oldpos.y) - farthest_empty;
+
+            }
+        }else if (move_offset.y == 0){
+            //dragging node only on the x-axis 
+            int remaining_xdist = move_offset.x;
+            size_t curr_y = int(oldpos.y)*win_width;
+
+            if (move_right){
+                //determine farthest you can go right without interacting border or other node
+                for (size_t x = int(oldpos.x)+1; x < win_width-NODE_RADIUS && remaining_xdist > 0; ++x){
+                    if (node_ilocs[curr_y + x] == NULL)
+                        farthest_empty = x;
+                    else 
+                        break;
+                    --remaining_xdist;
+                }
+
+                adjusted_offset.x = farthest_empty - int(oldpos.x);
+
+            }else{
+                //determine farthest you can go left without interacting border or other node
+                for (size_t x = int(oldpos.x)-1; x >= 0+NODE_RADIUS && remaining_xdist < 0; --x){
+                    if (node_ilocs[curr_y + x] == NULL)
+                        farthest_empty = x;
+                    else   
+                        break;
+                    ++remaining_xdist;
+                }
+
+                adjusted_offset.x = int(oldpos.x) - farthest_empty;
+
+            }
+        }else{
+            int dx_dy = round(move_offset.x/move_offset.y);
+            int dy_dx = round(move_offset.y/move_offset.x);
+
+            if (dx_dy > dy_dx){
+
+            }else if (dy_dx > dx_dy){
+
+            }else{
+
+            }
+
+        }
+
+        node->setNodePos(adjusted_offset + sf::Vector2i(node->getNodePos()));
+
+
     }
 
     //gets the head node of a graph at index i
@@ -269,6 +243,7 @@ public:
         return num_graphs;
     }
 
+    //returns the node interface location array
     inline Node** getNodeIlocs(){
         return node_ilocs;
     }
@@ -393,57 +368,14 @@ public:
         num_graphs++;
     }
 
-    //takes an existing node an appends it as a new graph
-    void existingNodeToIndependentGraph(Node* node){
-        all_graphs.push_back(node);
-        std::cout << "Pushing Node: " << node->getNodeIdent() << " - vec size: " << all_graphs.size();
-        node_locs[node->getNodeIdent()] = all_graphs.size()-1;
-        std::cout << " node is located at index: " << node_locs[node->getNodeIdent()] << '\n';
-        num_graphs++;
-    }
-
-    //runs DFS and changes each identifier's to the new_loc in all_graphs
-    //Arguments(new all_graphs location, graph head to move, set to keep track of visited node)
-    //doesnt update num_graphs after move
-    void moveGraphLoc(size_t new_loc, Node* curr, std::unordered_set<ull>& visited){
-        //mark current node as visited
-        visited.insert(curr->getNodeIdent());
-        //move current node to the new all_graph locs
-        node_locs[curr->getNodeIdent()] = new_loc;
-        //get current node's links list
-        std::vector<ADJ_NODE> links = curr->getNodeLinks();
 
 
-        //check each node in currents links 
-        for (size_t i = 0; i < links.size(); ++i){
-            Node* inspect = std::get<0>(links[i]);
-            if (!visited.count(inspect->getNodeIdent())){
-                moveGraphLoc(new_loc, inspect, visited);
-            }
-        }
-    }
 
-    //runs DFS and changes nodes identifier's to the new_loc in all_graph
-    void moveGraphLoconDelete(size_t new_loc, Node* curr, std::unordered_set<ull>& visited, std::unordered_map<ull, bool>& nodechanged){
-        //mark current node as visited
-        visited.insert(curr->getNodeIdent());
-        //move current node to the new all_graph locs
-        node_locs[curr->getNodeIdent()] = new_loc;
-        //get current node's links list
-        std::vector<ADJ_NODE> links = curr->getNodeLinks();
+/* 
+    - Joining Nodes
+    - Unjoining Nodes
 
-        //check each node in currents links 
-        for (size_t i = 0; i < links.size(); ++i){
-            Node* inspect = std::get<0>(links[i]);
-            if (!visited.count(inspect->getNodeIdent())){
-                //mark the node as changed graph if it was a node that was severed from the NTD
-                if (nodechanged.count(inspect->getNodeIdent())) 
-                    nodechanged[inspect->getNodeIdent()] = 1;
-                
-                moveGraphLoc(new_loc, inspect, visited);
-            }
-        }
-    }
+ */
 
     //should take in the points of two existing nodes and connect them together in their links vector
     //check if two nodes are in the same graph
@@ -497,7 +429,9 @@ public:
                 ull link_ident = getNewLinkIdent();
                 n1->addLinktoNode(n2, link_weight, link_ident);
                 n2->addLinktoNode(n1, link_weight, link_ident);
-                addNewLink(n1->getNodePos(), n2->getNodePos(), sf::Color::Green);
+                //addNewLink(n1->getNodePos(), n2->getNodePos(), sf::Color::Green);
+                GUIlinks.addLink(n1->getNodePos(), n2->getNodePos(), sf::Color::Green, sf::Color::Green);
+                GUIlinks.setLinkMap(n1->getNodeIdent(), n2->getNodeIdent(), GUIlinks.getLinksSize()-2);
             }
 
             //remove graph getting moved from all_graphs if locations are different
@@ -513,7 +447,8 @@ public:
 
     //Join node by Node* values
     void joinNodes(Node* n1, Node* n2, size_t link_weight){
-        size_t loc1 = node_locs[n1->getNodeIdent()], loc2 = node_locs[n2->getNodeIdent()];
+        size_t loc1 = node_locs[n1->getNodeIdent()];
+        size_t loc2 = node_locs[n2->getNodeIdent()];
 
         //update node 2's node_loc to be the same as node 1 if it isn't already
         if (loc1 != loc2){
@@ -539,12 +474,15 @@ public:
             ull link_ident = getNewLinkIdent();
             n1->addLinktoNode(n2, link_weight, link_ident);
             n2->addLinktoNode(n1, link_weight, link_ident);
-            addNewLink(n1->getNodePos(), n2->getNodePos(), sf::Color::Green);
+            //addNewLink(n1->getNodePos(), n2->getNodePos(), sf::Color::Green);
+            GUIlinks.addLink(n1->getNodePos(), n2->getNodePos(), sf::Color::Green, sf::Color::Green);
+            GUIlinks.setLinkMap(n1->getNodeIdent(), n2->getNodeIdent(), GUIlinks.getLinksSize()-2);
         }
 
         //remove graph getting moved from all_graphs if locations are different
         //record open position in open_locs
-        if ((loc1 != loc2) && !alreadyConnected){
+        //CHANGED: got rid of ->  && !alreadyConnected
+        if (loc1 != loc2){
             all_graphs[loc2] = NULL;
             open_locs.push_back(loc2);
         }
@@ -554,6 +492,211 @@ public:
     void unJoinNodes(){
 
     }
+
+
+
+
+/* 
+    - Deleting Node functions
+    - Helper functions for delete method
+
+*/
+
+    //takes an existing node an appends it as a new graph
+    void existingNodeToIndependentGraph(Node* node){
+        all_graphs.push_back(node);
+        std::cout << "Pushing Node: " << node->getNodeIdent() << " - vec size: " << all_graphs.size();
+        node_locs[node->getNodeIdent()] = all_graphs.size()-1;
+        std::cout << " node is located at index: " << node_locs[node->getNodeIdent()] << '\n';
+        num_graphs++;
+    }
+
+    //runs DFS and changes each identifier's to the new_loc in all_graphs
+    //Arguments(new all_graphs location, graph head to move, set to keep track of visited node)
+    //doesnt update num_graphs after move
+    void moveGraphLoc(size_t new_loc, Node* curr, std::unordered_set<ull>& visited){
+        //mark current node as visited
+        visited.insert(curr->getNodeIdent());
+        //move current node to the new all_graph locs
+        node_locs[curr->getNodeIdent()] = new_loc;
+        //get current node's links list
+        std::vector<ADJ_NODE> links = curr->getNodeLinks();
+
+
+        //check each node in currents links 
+        for (size_t i = 0; i < links.size(); ++i){
+            Node* inspect = std::get<0>(links[i]);
+            if (!visited.count(inspect->getNodeIdent())){
+                moveGraphLoc(new_loc, inspect, visited);
+            }
+        }
+    }
+
+    //runs DFS and changes nodes identifier's to the new_loc in all_graph
+    void moveGraphLoconDelete(size_t new_loc, Node* curr, std::unordered_set<ull>& visited, std::unordered_map<ull, bool>& nodechanged){
+        //mark current node as visited
+        visited.insert(curr->getNodeIdent());
+        //move current node to the new all_graph locs
+        node_locs[curr->getNodeIdent()] = new_loc;
+        //get current node's links list
+        std::vector<ADJ_NODE> links = curr->getNodeLinks();
+
+        //check each node in currents links 
+        for (size_t i = 0; i < links.size(); ++i){
+            Node* inspect = std::get<0>(links[i]);
+            if (!visited.count(inspect->getNodeIdent())){
+                //mark the node as changed graph if it was a node that was severed from the NTD
+                if (nodechanged.count(inspect->getNodeIdent())) 
+                    nodechanged[inspect->getNodeIdent()] = 1;
+                
+                moveGraphLoc(new_loc, inspect, visited);
+            }
+        }
+    }
+
+    void deleteNode(Node* NTD){
+        sf::Vector2i npos= sf::Vector2i(NTD->getNodePos());
+        size_t ipos = win_width*npos.y + npos.x;
+
+        ull NTDident = NTD->getNodeIdent();
+        size_t NTDloc = node_locs[NTDident];                 //get NTD all_graphs location
+        std::vector<ADJ_NODE> links = NTD->getNodeLinks();         //get NTD's node links
+        
+        //keeps track of the nodes identifier whose link with NTD was severed
+        std::unordered_map<ull, bool> nodechanged;
+
+        //search and remove link from child to NTD
+        //save child node into map to update graph pos later
+        for (size_t i=0; i < links.size(); ++i){
+            Node* child = std::get<0>(links[i]);
+            ull child_ident = child->getNodeIdent();
+            //remove the link to NTD from child
+            child->remLinktoNode(NTDident);
+            
+            //save the child node in the map
+            nodechanged[child_ident] = 0;
+
+            GUIlinks.removeLink(NTDident, child_ident);
+            GUIlinks.removeLinkMap(NTDident, child_ident);
+        }
+        std::cout << "\tfinished GUI removal\n";
+
+        //update NTD's childrens graph positions
+        for (size_t i=0; i < links.size(); ++i){
+            //Attempt to change a node's graph position if it hasn't been changed by a previous node
+            Node* child = std::get<0>(links[i]);
+            if (!nodechanged[child->getNodeIdent()]){
+                
+                //determine first open position to move the graph to
+                int newpos = all_graphs.size();
+                if (open_locs.size() > 0){
+                    newpos = open_locs[0];
+                    open_locs.erase(open_locs.begin());
+                }
+
+                std::cout << "DELETEnode: \n\tCreating new graph for node: " << child->getNodeIdent() << " curr loc: " << node_locs[child->getNodeIdent()] << '\n';
+                std::cout << "\tCurr graphs: " << num_graphs << " - node going to index: " << newpos << std::endl;
+                std::unordered_set<ull> visited;
+                //change the nodes in the graph to the new position
+                moveGraphLoconDelete(newpos, child, visited, nodechanged);
+
+                //move child head node to previously null location
+                all_graphs[newpos] = child;
+                num_graphs++;
+
+                //ERROR CHECKING BELOW
+                std::cout <<"\tNode: " << child->getNodeIdent() << " now located at graph: " << node_locs[child->getNodeIdent()] << "\n";
+                Node * s = all_graphs[node_locs[child->getNodeIdent()]];
+                if (s == NULL){
+                    std::cout << "\tNode: " << child->getNodeIdent() << " not found as head of graph\n";
+                }else{
+                    std::cout << "\tNode: " << child->getNodeIdent() << " shud equal head: " << s->getNodeIdent() << "\n";
+                }
+            }
+        }
+
+        //remove NTD data from node_locs and all_graphs, decrement total number of graphs
+        node_locs.erase(NTDident);
+        delete NTD;
+        all_graphs[NTDloc] = NULL;
+        node_ilocs[ipos] = NULL;
+        num_graphs--;
+
+        //record NTDloc as open
+        open_locs.push_back(NTDloc);
+
+        std::cout << "\tFinished deleting\n";
+    }
+
+
+    void moveGraphonDelete(Node* curr, std::unordered_set<ull>& visited, size_t new_loc){
+        // change where to find node via node_locs
+        ull curr_ident = curr->getNodeIdent();
+        visited.emplace(curr_ident);
+        node_locs[curr_ident] = new_loc;
+
+        // DFS to change all attached children to the new location in all_graphs
+        std::vector<ADJ_NODE> links = curr->getNodeLinks();
+        for (size_t i=0; i < links.size(); ++i){
+            Node* inspect = std::get<0>(links[i]);
+            if (!visited.count(inspect->getNodeIdent()))
+                moveGraphonDelete(inspect, visited, new_loc);
+        }
+    }
+
+    void REVISEDdeleteNode(Node* NTD){
+        sf::Vector2i npos= sf::Vector2i(NTD->getNodePos());
+        ull NTDident = NTD->getNodeIdent();
+        
+        std::vector<ADJ_NODE> links = NTD->getNodeLinks();
+        std::unordered_set<ull> visited;
+        visited.emplace(NTDident);
+
+        // move each child node to a new graph positon & remove link from child to NTD
+        for (size_t i=0; i < links.size(); ++i){
+            Node* child = std::get<0>(links[i]);
+            ull child_ident = child->getNodeIdent();
+
+            if (!visited.count(child->getNodeIdent())){
+                size_t new_loc = all_graphs.size();
+
+                // change location of graph head in all_graphs
+                if (open_locs.size() > 0){
+                    new_loc = open_locs[0];
+                    all_graphs[new_loc] = child;
+                    open_locs.erase(open_locs.begin());
+                }else{
+                    all_graphs.push_back(child);
+                }
+                
+                // change the graph so all nodes are found at the new_loc
+                moveGraphonDelete(child, visited, new_loc);
+                num_graphs++;
+            }
+
+            // remove link from NTD to children node and GUI links
+            child->remLinktoNode(NTDident);
+            GUIlinks.removeLink(NTDident, child_ident);
+            GUIlinks.removeLinkMap(NTDident, child_ident);
+        }
+
+
+        // remove NTD from graph structure 
+        size_t NTDloc = node_locs[NTDident];
+        all_graphs[NTDloc] = NULL;
+        open_locs.push_back(NTDloc);
+        node_locs.erase(NTDident);
+        num_graphs--;
+
+        // remove NTD from GUI 
+        size_t ipos = win_width*npos.y + npos.x;
+        node_ilocs[ipos] = NULL;
+
+        // free NTD
+        delete NTD;
+        NTD = NULL;
+    }
+
 
     //given a node identifier, will delete that node and fix the (possibly) broken graph structure
     void REVISEDdeleteNode(ull NTDident){
@@ -638,6 +781,15 @@ public:
         //record NTDloc as open
         open_locs.push_back(NTDloc);
     }
+
+
+
+
+/* 
+    - Updating Link weight
+    - Displaying link Weight
+
+ */
 
     //updates the link connection weight between two nodes by pointer to a given link weight
     void updateNodeLink(Node* n1, Node* n2, size_t lw){
@@ -780,6 +932,16 @@ public:
         }
     }
 
+
+
+
+/* 
+    - Erasing Graph functions (DFS method)
+    - No longer needed ?
+    - Used before for deconstructor
+
+ */
+
     //helper function for eraseGraph that uses visited set in order to recursively delete all nodes in a graph
     void eraseGraphHelper(Node* curr, std::unordered_set<Node*>& visited){
         std::cout << "\tNode " << curr->getNodeIdent() << " has been visited\n";
@@ -825,9 +987,12 @@ public:
        }
     }
 
+
+
     //deconstructor deletes every node for all the graphs
     ~Graph(){
         //eraseAllGraphs();
+
         std::cout << "Freeing all nodes\n";
         for (size_t i=0; i < win_width*win_height; ++i){
             if (node_ilocs[i] != nullptr){
@@ -836,9 +1001,5 @@ public:
                     node_ilocs[i] = NULL;
             }
         }
-
-        // for (size_t i=0; i < win_width*win_height; ++i)
-        //     delete node_ilocs[i];
-        // delete [] node_ilocs;
     }
 };
