@@ -63,7 +63,7 @@ public:
             if (xe >= win_width) xe = win_width-1;
             if (ye >= win_height) ye = win_height-1;
             
-            std::cout << "1 - Searched\n" << "\tyStart: " << ys << " yEnd: " << ye << "\n\txStart: " << xs << " xEnd: " << xe << '\n';
+            //std::cout << "1 - Searched\n" << "\tyStart: " << ys << " yEnd: " << ye << "\n\txStart: " << xs << " xEnd: " << xe << '\n';
             
             //search the interface reduced range
             for (int y = ys; y <= ye; ++y){
@@ -113,10 +113,10 @@ public:
     }
 
     void removeNode(const sf::RenderWindow* win){
-        Node* NTD = mouseOverNode(win, NODE_RADIUS*2);
+        Node* NTD = mouseOverNode(win, NODE_RADIUS);
         if (NTD){
             std::cout << "3 - Deleting node: " << NTD->getNodeIdent() << "\n";
-            allgraphs->REVISEDdeleteNode(NTD);
+            allgraphs->deleteNode(NTD);
         }
     }
 
