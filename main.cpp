@@ -1,7 +1,9 @@
-#include <iostream>
-#include <functional>
+#include "imgui.h" 
+#include "imgui-SFML.h" 
 #include <SFML/Graphics.hpp>
 #include <SFML/System.hpp>
+#include <iostream>
+#include <functional>
 #include <chrono>
 #include <unistd.h>
 #include <fcntl.h>
@@ -67,6 +69,7 @@ int main(){
                             }else if (state == SimulState::AddLinkMode){
                                 //when mouse is clicked on a node, save the node position to mouse_on_node
                                 right_clicked_on_node = game.mouseOverNode(&window, NODE_RADIUS);
+                                game.setShadowLink(right_clicked_on_node);
                             }else if (state == SimulState::RemoveNodeMode){
                                 game.removeNode(&window);
                             }
@@ -78,7 +81,6 @@ int main(){
                             left_mpos = sf::Mouse::getPosition(window);
                             left_clicked_on_node = game.mouseOverNode(&window, NODE_RADIUS);
                             dragging = true;
-
                         }
                         
                         break;
@@ -88,6 +90,7 @@ int main(){
                             if (state == SimulState::AddLinkMode){
                                 game.linkNodes(right_clicked_on_node, game.mouseOverNode(&window, NODE_RADIUS));
                                 right_clicked_on_node = NULL;
+                                game.resetShadowLink();
                             }
 
                         }else if (event.mouseButton.button == sf::Mouse::Left){
@@ -122,9 +125,13 @@ int main(){
                             }
                         }
                         break;
+
+                    default:
+                        break;
                 }
             }
-        
+
+        game.moveShadowLink(right_clicked_on_node, &window);
         game.onDragNode(&window, left_clicked_on_node, left_mpos, dragging);
         game.renderAllGraphs(&window);
     }

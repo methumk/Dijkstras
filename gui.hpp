@@ -4,6 +4,7 @@ gui.hpp
     -  Dijkstra alogrithm and the drawing functionalities
 */
 #pragma once
+#include <SFML/Graphics.hpp>
 #include "algo.hpp"
 
 class Gui{
@@ -11,6 +12,9 @@ private:
     Graph* allgraphs;
     sf::Font font;
     size_t win_width, win_height;
+    std::vector<sf::Vertex> shadowLink;
+    //sf::Vertex* shadowLink[2];
+
 public:
     Gui(const int& w_width, const int& w_height){
         //try to load in font needed to display text
@@ -129,17 +133,43 @@ public:
             allgraphs->joinNodes(n1, n2, 20);
         }
     }
+
+    void setShadowLink(Node* n1){
+        if (n1){
+            shadowLink.push_back(sf::Vertex(n1->getNodePos(), sf::Color::Green));
+            shadowLink.push_back(sf::Vertex(n1->getNodePos(), sf::Color::Green));
+        }
+    }
+
+    void moveShadowLink(Node* n1, sf::RenderWindow* win){
+        if (n1){
+            sf::Vector2f pos = sf::Vector2f(sf::Mouse::getPosition(*win));
+            sf::Vertex* end_point = new sf::Vertex(pos, sf::Color::Green);
+
+            if (shadowLink.size() == 2){
+                shadowLink[1] = sf::Vertex(pos, sf::Color::Green);
+            }
+        }
+    }
+
+    inline void resetShadowLink(){
+        shadowLink.clear();
+        std::cout << "shadow link clear\n";
+    }
     
     //renders all elements of all the graphs
     void renderAllGraphs(sf::RenderWindow* win){
         win->clear();
+
+        if (shadowLink.size() == 2){
+            win->draw(shadowLink.data(), shadowLink.size(), sf::Lines);
+        }
 
         allgraphs->drawAllLinks(win);
         size_t ags = allgraphs->getAllGraphSize();
         for (size_t i=0; i < ags; ++i){
             allgraphs->drawAllNodesinGraph(i, win);
         }
-
 
         win->display();
     }
