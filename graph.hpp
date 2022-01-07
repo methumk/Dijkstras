@@ -6,6 +6,8 @@ Graph class:
     - handle deletion of a Node (what happens to its links)
 */
 #pragma once
+#include "imgui.h" 
+#include "imgui-SFML.h" 
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <cstdlib>
@@ -52,6 +54,15 @@ public:
         //GUIlinks.setPrimitiveType(sf::Lines);
     };
 
+
+
+    /* 
+        Functions that draw to the gui
+            - Drawing links
+            - Drawing Graph nodes
+            - Drawing graph viewing table
+     */
+
     //Draws all links
     inline void drawAllLinks(sf::RenderWindow* win){
         GUIlinks.drawLinks(win);
@@ -81,6 +92,42 @@ public:
             DFSGraphDraw(node_head, visited, win);
         }
     }
+
+    // record nodes at a certain graph position
+    void recordAllNodes(Node* curr, std::unordered_set<ull>& visited, std::string& allnodes){
+        ull currNode = curr->getNodeIdent();
+        visited.insert(currNode);
+        allnodes += std::to_string(currNode);
+
+        std::vector<ADJ_NODE> links = curr->getNodeLinks();
+        for (size_t i=0; i < links.size(); ++i){
+            Node* inspect = std::get<0>(links[i]);
+            if (!visited.count(inspect->getNodeIdent())){     
+                allnodes += ' ';
+                recordAllNodes(inspect, visited, allnodes);
+            }
+        }
+
+    }
+
+    // render IMGUI table to display nodes corresponding to each graph
+    void renderGraphViewer(){
+        for (size_t i=0; i < all_graphs.size(); ++i){
+            std::unordered_set<ull> visited;
+            std::string allnodes = "\t";
+
+            ImGui::Text("Graph: %d", i);
+            if (all_graphs[i]){
+                recordAllNodes(all_graphs[i], visited, allnodes);
+                ImGui::Text(allnodes.c_str());
+            }else{
+                ImGui::Text(" ");
+            }
+
+            visited.clear();
+        }
+    }
+
 
     //determines if it's legal to move node to a new position
     void moveNode(Node* node, sf::Vector2f& oldpos, sf::Vector2f& newpos){
@@ -228,11 +275,6 @@ public:
         return curr_link_ident++;
     }
 
-    //Adds a Node to the all_graphs vector
-    inline void addGraph(Node* n){
-        all_graphs.push_back(n);
-    }
-
     //returns size of the all_graphs vector
     inline size_t all_graphs_size(){
         return all_graphs.size();
@@ -291,83 +333,69 @@ public:
     //runs DFS to find node with given identifier
     //REVISED: you don't have to tell which all_graphs index to look into
     Node* REVISEDfindNode(ull ident){
+        std::cout << "\nFINDING NODE" << ident << "\n";
         if (!node_locs.count(ident)){
-            std::cout << "ERROR in graph.REVISEDfindNode - Node location not recorded in map - EXITING\n";
+            std::cout << "\tERROR in graph.REVISEDfindNode - Node location not recorded in map - EXITING\n";
             exit(EXIT_FAILURE);
         }
         
         Node* findNode = all_graphs[node_locs[ident]];
         if (findNode == NULL){
-            std::cout << "REVISEDfindNode: Error - node to find is not in all_graphs\n";
+            std::cout << "\tREVISEDfindNode: Error - node to find is not in all_graphs\n";
             std::cout << "\t Searching for node: " << ident;
             std::cout << "\n\t Searched for index: " << node_locs[ident] << " in all_graphs - EXITING\n";
             exit(EXIT_FAILURE);
+        }else{
+            std::cout << "\tNode found in location: " << node_locs[ident] << "\n";
         }
 
         std::unordered_set<ull> visited;
         Node* ret = graphDFS(findNode, ident, visited);
-        if (ret == NULL) std::cout << "DFS returned null\n";
+        if (ret == NULL) std::cout << "\tDFS returned null\n";
         return ret;
     }
 
-    //creates a new individual node and implants it as its own graph
-    void createNewNode(){
-        ull ident = getNewNodeIdent();
-        size_t openidx = -1;
-        for (size_t i=0; i < all_graphs.size(); ++i){
-            if (all_graphs[i] == NULL){
-                openidx = i;
-                break;
-            }
-        }
-
-        //if there are no open spaces in all_graphs append the new node
-        //otherwise append in found open spot
-        if (openidx == -1){
-            all_graphs.push_back(new Node(ident));
-            node_locs.emplace(ident, all_graphs.size()-1);
-        }else{
-            all_graphs[openidx] = new Node(ident);
-            node_locs.emplace(ident, openidx);
-        }
-        num_graphs++;
-    }
 
     //creates a new individual node and implants it as its own graph at position pos
     void createNewNode(sf::Vector2i pos, sf::Font& font){
-        size_t iloc = pos.y*win_width + pos.x;
         ull ident = getNewNodeIdent();
-        int openidx = -1;
-        //search for open index in all_graphs
-        for (size_t i=0; i < all_graphs.size(); ++i){
-            if (all_graphs[i] == NULL){
-                openidx = i;
-                break;
-            }
+        Node* nn = new Node(ident, sf::Vector2f(pos), font);
+
+        // determine where to place the new node in all_graphs
+        size_t open_idx = all_graphs.size();
+        if (open_locs.size() > 0){
+            open_idx = open_locs[0]; 
+            open_locs.erase(open_locs.begin());
+            all_graphs[open_idx] = nn;   
+        }else{
+            all_graphs.push_back(nn);
         }
 
-        //if there are no open spaces in all_graphs append the new node
-        //otherwise append in found open spot
-        Node* nn = new Node(ident, sf::Vector2f(pos), font);
-        if (openidx == -1){
-            all_graphs.push_back(nn);
-            node_locs.emplace(ident, all_graphs.size()-1);
-        }else{
-            all_graphs[openidx] = nn;
-            node_locs.emplace(ident, openidx);
-        }
+        //store mapping from identity to all_graphs index
+        node_locs[ident] = open_idx;
+
         
-        //store location of node in the interface
+        // set the node in the interface array
+        size_t iloc = win_width*pos.y + pos.x;
         if (node_ilocs[iloc] == NULL){
             node_ilocs[iloc] = nn;
         }else{
-            std::cout << "\tadding to iloc: " << iloc << " is not null - EXITING\n";
+            std::cout << "\tCREATE NODE - adding to iloc position: " << iloc << " is not null - EXITING\n";
             exit(EXIT_FAILURE);
         }
-        std::cout << "\tnode ident: " << ident << '\n';
+
         num_graphs++;
     }
 
+    // debugging graph deleting 
+    // CAN DELETE LATER
+    void displayOpenLocs(){
+        std::cout << "DISPLAYING OPEN_LOCS\n\t";
+        for (size_t i=0; i < open_locs.size(); ++i){
+            std::cout << open_locs[i] << " ";
+        }
+        std::cout << "\n";
+    }
 
 
 
@@ -455,6 +483,8 @@ public:
             std::unordered_set<ull> visited;
             //update node_locs map for the graph thats getting moved
             moveGraphLoc(all_graphs[loc2], visited, loc1);
+            all_graphs[loc2] = NULL;
+            open_locs.push_back(loc2);
             num_graphs--;
         }
 
@@ -482,10 +512,10 @@ public:
         //remove graph getting moved from all_graphs if locations are different
         //record open position in open_locs
         //CHANGED: got rid of ->  && !alreadyConnected
-        if (loc1 != loc2){
-            all_graphs[loc2] = NULL;
-            open_locs.push_back(loc2);
-        }
+        // if (loc1 != loc2){
+        //     all_graphs[loc2] = NULL;
+        //     open_locs.push_back(loc2);
+        // }
     }
 
     //unjoins two nodes
@@ -507,6 +537,7 @@ public:
         ull curr_ident = curr->getNodeIdent();
         visited.emplace(curr_ident);
         node_locs[curr_ident] = new_loc;
+        std::cout << "\tnode: " << curr_ident << " moved to: " << new_loc << '\n';
 
         // DFS to change all attached children to the new location in all_graphs
         std::vector<ADJ_NODE> links = curr->getNodeLinks();
@@ -519,6 +550,7 @@ public:
 
     // deletes a given node and updates connected node's positions
     void deleteNode(Node* NTD){
+        std::cout << "\nDELETING NODE " << NTD->getNodeIdent() << "\n";
         sf::Vector2i npos= sf::Vector2i(NTD->getNodePos());
         ull NTDident = NTD->getNodeIdent();
         
@@ -531,7 +563,7 @@ public:
             Node* child = std::get<0>(links[i]);
             ull child_ident = child->getNodeIdent();
 
-            if (!visited.count(child->getNodeIdent())){
+            if (!visited.count(child_ident)){
                 size_t new_loc = all_graphs.size();
 
                 // change location of graph head in all_graphs
@@ -539,8 +571,10 @@ public:
                     new_loc = open_locs[0];
                     all_graphs[new_loc] = child;
                     open_locs.erase(open_locs.begin());
+                    std::cout << "\tmoving to open loc pos\n";
                 }else{
                     all_graphs.push_back(child);
+                    std::cout << "\tmoving to all_graph end\n";
                 }
                 
                 // change the graph so all nodes are found at the new_loc

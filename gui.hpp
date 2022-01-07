@@ -92,6 +92,12 @@ public:
         }
     }
 
+    void checkNodeExist(Node* n){
+        if (n){
+            Node* x = allgraphs->REVISEDfindNode(n->getNodeIdent());
+        }
+    }
+
     //updates the node position the left mouse button is pressing on to a dragged postion
     void onDragNode(const sf::RenderWindow* win, Node* mouse_on_node, sf::Vector2i& prev_mpos, bool& dragging){
         if (mouse_on_node && dragging){
@@ -130,10 +136,19 @@ public:
         if (n2 != NULL && n1 != NULL && n1 != n2){
             //have gui ask for node link weight
             int link_weight;
+            std::cout << "4- Linking nodes\n";
             allgraphs->joinNodes(n1, n2, 20);
         }
     }
 
+
+
+    /* 
+        Shadow Link
+            - Displays the link the user is trying to make between two nodes
+    */
+
+    // Creates a vertex point to show a shadow link
     void setShadowLink(Node* n1){
         if (n1){
             shadowLink.push_back(sf::Vertex(n1->getNodePos(), sf::Color::Green));
@@ -141,6 +156,7 @@ public:
         }
     }
 
+    // Moves the shadow link end point to show where the user is trying to link
     void moveShadowLink(Node* n1, sf::RenderWindow* win){
         if (n1){
             sf::Vector2f pos = sf::Vector2f(sf::Mouse::getPosition(*win));
@@ -152,14 +168,19 @@ public:
         }
     }
 
+    // resets the shadow link v
     inline void resetShadowLink(){
         shadowLink.clear();
-        std::cout << "shadow link clear\n";
     }
     
+
+    void renderGraphViewer(){
+        allgraphs->renderGraphViewer();
+    }
+
     //renders all elements of all the graphs
     void renderAllGraphs(sf::RenderWindow* win){
-        win->clear();
+        // win->clear();
 
         if (shadowLink.size() == 2){
             win->draw(shadowLink.data(), shadowLink.size(), sf::Lines);
@@ -171,8 +192,11 @@ public:
             allgraphs->drawAllNodesinGraph(i, win);
         }
 
-        win->display();
+        // win->display();
     }
+
+
+
 
     //clears the entire screen of nodes and links
     void clearScreen(){
