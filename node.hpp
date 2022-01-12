@@ -14,6 +14,8 @@ structure.hpp
 #include <string>
 #include <cmath>
 
+#include "links.hpp"
+
 //Define ull for identifiers
 typedef unsigned long long ull;
 #define NODE_RADIUS 30
@@ -28,12 +30,13 @@ Node class:
 class Node{
 public:
     typedef std::tuple<Node*, size_t, ull> ADJ_NODE;
+    typedef std::tuple<Node*, size_t, ull, bool> ADJ_NODE2;
     typedef std::vector<ADJ_NODE> NODE_VEC;
 private:
     ull ident;                              //Nodes identifying number
     std::vector<ADJ_NODE> links;            //The nodes connections: vector of tuples<node, link weight, node identifier>
     sf::CircleShape GUInode;                //Circle used to represent node on the interface
-    sf::Text id;                            //Interface text used to identify each node
+    sf::Text textId;                            //Interface text used to identify each node
 public:
     Node(){}
     Node(ull i): ident(i){}
@@ -47,24 +50,24 @@ public:
         GUInode.setOutlineThickness(2.f);
 
         //set inofrmation about node text
-        id.setFont(font);
-        id.setString(std::to_string(ident));
-        id.setCharacterSize(18);
-        id.setOrigin(id.getLocalBounds().width/2., id.getLocalBounds().height/2.);
-        id.setPosition(pos);
-        id.setFillColor(sf::Color::Red);  
+        textId.setFont(font);
+        textId.setString(std::to_string(ident));
+        textId.setCharacterSize(18);
+        textId.setOrigin(textId.getLocalBounds().width/2., textId.getLocalBounds().height/2.);
+        textId.setPosition(pos);
+        textId.setFillColor(sf::Color::Red);  
     }   
 
     //renders individual node and text
     void drawNode(sf::RenderWindow* win){
         win->draw(GUInode);       
-        win->draw(id); 
+        win->draw(textId); 
     }
 
     //moves the gui node to a given position
     inline void setNodePos(sf::Vector2i pos){
         GUInode.setPosition(sf::Vector2f(pos));
-        id.setPosition(sf::Vector2f(pos));
+        textId.setPosition(sf::Vector2f(pos));
     }
 
     //returns the position of the node
@@ -80,6 +83,22 @@ public:
         GUInode.setFillColor(color);
         GUInode.setOutlineColor(sf::Color::Blue);
         GUInode.setOutlineThickness(2.f);
+    }
+
+    //checks whether a node is singly linked to another node
+    //returns true if the from node is connected to the to node
+    //returns false otherwise
+    bool isSinglyLinked(Node* from_n, Node* to_n){
+        std::vector<ADJ_NODE> links = from_n->getNodeLinks();
+        size_t link_idx = 0;
+        for (; link_idx < links.size(); ++link_idx){
+            Node* inspect = std::get<0>(links[link_idx]);
+            if (inspect->ident == to_n->ident)
+                return true;
+                //replace above with below 
+                //return std::get<3>(links[link_idx]);
+        }
+
     }
 
     //add a new linked up node manually

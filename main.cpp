@@ -53,6 +53,7 @@ int main(){
 
     static bool leftPressed = false, rigthPressed = false, middlePressed = false, dragging = false;
     static SimulState state = SimulState::AddNodeMode;
+    static LinkStat link_state = LinkStat::Doubly;
     sf::Vector2i left_mpos, curr_mpos;
     Node *right_clicked_on_node = NULL, *left_clicked_on_node = NULL;
 
@@ -73,7 +74,7 @@ int main(){
                         }else if (state == SimulState::AddLinkMode){
                             //when mouse is clicked on a node, save the node position to mouse_on_node
                             right_clicked_on_node = game.mouseOverNode(&window, NODE_RADIUS);
-                            game.setShadowLink(right_clicked_on_node);
+                            game.setShadowLink(right_clicked_on_node, link_state);
                         }else if (state == SimulState::RemoveNodeMode){
                             game.removeNode(&window);
                         }
@@ -93,7 +94,7 @@ int main(){
                 case sf::Event::MouseButtonReleased:
                     if (event.mouseButton.button == sf::Mouse::Right){
                         if (state == SimulState::AddLinkMode){
-                            game.linkNodes(right_clicked_on_node, game.mouseOverNode(&window, NODE_RADIUS));
+                            game.linkNodes(right_clicked_on_node, game.mouseOverNode(&window, NODE_RADIUS), link_state);
                             game.resetShadowLink();
                             right_clicked_on_node = NULL;
                         }
@@ -128,6 +129,16 @@ int main(){
                             std::cout << "\n\nMode Activated: Removing Nodes\n";
                             state = SimulState::RemoveNodeMode; 
                         }
+                    }else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Num1)){
+                        if (link_state != LinkStat::SinglyTo) 
+                            link_state = LinkStat::SinglyTo;
+                        std::cout <<"\nLinking state: Singly To\n";
+
+                    }else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Num2)){
+                        if (link_state != LinkStat::Doubly) 
+                            link_state = LinkStat::Doubly;
+                        std::cout <<"\nLinking state: Doubly\n";
+
                     }
                     break;
 
@@ -137,13 +148,16 @@ int main(){
         }
         ImGui::SFML::Update(window, deltaClock.restart());
 
-        game.moveShadowLink(right_clicked_on_node, &window);
+        // handle link and node dragging
+        game.moveShadowLink(right_clicked_on_node, &window, link_state);
         game.onDragNode(&window, left_clicked_on_node, left_mpos, dragging);
 
+        //draw ImGui objects
         ImGui::Begin("Graph Viewer");
-        game.renderGraphViewer();
+        game.drawGraphViewer();
         ImGui::End();
 
+        //render SFML objects
         window.clear();
         game.renderAllGraphs(&window);
         ImGui::SFML::Render(window);

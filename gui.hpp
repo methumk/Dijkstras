@@ -131,15 +131,16 @@ public:
     }
 
     //attempt to link two not Null and different nodes with each other
-    void linkNodes(Node* n1, Node* n2){
+    void linkNodes(Node* n1, Node* n2, const LinkStat& lstate){
         //check that nodes being joined aren't the same
         if (n2 != NULL && n1 != NULL && n1 != n2){
             //have gui ask for node link weight
             int link_weight;
             std::cout << "4- Linking nodes\n";
-            allgraphs->joinNodes(n1, n2, 20);
+            allgraphs->joinNodes(n1, n2, 20, lstate);
         }
     }
+
 
 
 
@@ -149,21 +150,29 @@ public:
     */
 
     // Creates a vertex point to show a shadow link
-    void setShadowLink(Node* n1){
+    void setShadowLink(Node* n1, const LinkStat& lstate){
         if (n1){
-            shadowLink.push_back(sf::Vertex(n1->getNodePos(), sf::Color::Green));
-            shadowLink.push_back(sf::Vertex(n1->getNodePos(), sf::Color::Green));
+            sf::Color lcolor;
+            if (lstate == LinkStat::Doubly) lcolor = sf::Color::Green;
+            else                            lcolor = sf::Color::Yellow;
+
+            shadowLink.push_back(sf::Vertex(n1->getNodePos(), lcolor));
+            shadowLink.push_back(sf::Vertex(n1->getNodePos(), lcolor));
+            
         }
     }
 
     // Moves the shadow link end point to show where the user is trying to link
-    void moveShadowLink(Node* n1, sf::RenderWindow* win){
+    void moveShadowLink(Node* n1, sf::RenderWindow* win, const LinkStat& lstate){
         if (n1){
             sf::Vector2f pos = sf::Vector2f(sf::Mouse::getPosition(*win));
-            sf::Vertex* end_point = new sf::Vertex(pos, sf::Color::Green);
+            
+            sf::Color lcolor;
+            if (lstate == LinkStat::Doubly) lcolor = sf::Color::Green;
+            else                            lcolor = sf::Color::Yellow;
 
             if (shadowLink.size() == 2){
-                shadowLink[1] = sf::Vertex(pos, sf::Color::Green);
+                shadowLink[1] = sf::Vertex(pos, lcolor);
             }
         }
     }
@@ -174,8 +183,15 @@ public:
     }
     
 
-    void renderGraphViewer(){
-        allgraphs->renderGraphViewer();
+
+
+    /* 
+        Rendering
+            - render graph viewer
+            - render graphs
+     */
+    void drawGraphViewer(){
+        allgraphs->drawGraphViewer();
     }
 
     //renders all elements of all the graphs

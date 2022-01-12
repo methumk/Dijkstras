@@ -19,7 +19,6 @@ Graph class:
 #include <cmath>
 
 #include "node.hpp"
-#include "links.hpp"
 
 
 class Graph{
@@ -111,7 +110,7 @@ public:
     }
 
     // render IMGUI table to display nodes corresponding to each graph
-    void renderGraphViewer(){
+    void drawGraphViewer(){
         for (size_t i=0; i < all_graphs.size(); ++i){
             std::unordered_set<ull> visited;
             std::string allnodes = "\t";
@@ -412,7 +411,7 @@ public:
             //note if you connect any node from an index in all_graphs with another one, it becomes one graph so you can get rid of the entire pointer on one side
             //have to change node locs of the graph you are moving though
     //right now just going to give it node identifier parameter
-    void joinNodes(ull ident1, ull ident2, size_t link_weight){
+    void joinNodes(ull ident1, ull ident2, size_t link_weight, const LinkStat& lstate){
         if (ident1 == ident2){
             std::cout << "ERROR in graph.joinNodes: cannot join node with itself EXITING\n";
             exit(EXIT_FAILURE);
@@ -458,8 +457,8 @@ public:
                 n1->addLinktoNode(n2, link_weight, link_ident);
                 n2->addLinktoNode(n1, link_weight, link_ident);
                 //addNewLink(n1->getNodePos(), n2->getNodePos(), sf::Color::Green);
-                GUIlinks.addLink(n1->getNodePos(), n2->getNodePos(), sf::Color::Green, sf::Color::Green);
-                GUIlinks.setLinkMap(n1->getNodeIdent(), n2->getNodeIdent(), GUIlinks.getLinksSize()-2);
+                GUIlinks.addLink(n1->getNodePos(), n2->getNodePos(), n1->getNodeIdent(), n2->getNodeIdent(), lstate);
+                //GUIlinks.setLinkMap(n1->getNodeIdent(), n2->getNodeIdent(), GUIlinks.getLinksSize()-2);
             }
 
             //remove graph getting moved from all_graphs if locations are different
@@ -474,7 +473,7 @@ public:
     }
 
     //Join node by Node* values
-    void joinNodes(Node* n1, Node* n2, size_t link_weight){
+    void joinNodes(Node* n1, Node* n2, size_t link_weight, const LinkStat& lstate){
         size_t loc1 = node_locs[n1->getNodeIdent()];
         size_t loc2 = node_locs[n2->getNodeIdent()];
 
@@ -505,17 +504,43 @@ public:
             n1->addLinktoNode(n2, link_weight, link_ident);
             n2->addLinktoNode(n1, link_weight, link_ident);
             //addNewLink(n1->getNodePos(), n2->getNodePos(), sf::Color::Green);
-            GUIlinks.addLink(n1->getNodePos(), n2->getNodePos(), sf::Color::Green, sf::Color::Green);
-            GUIlinks.setLinkMap(n1->getNodeIdent(), n2->getNodeIdent(), GUIlinks.getLinksSize()-2);
+            GUIlinks.addLink(n1->getNodePos(), n2->getNodePos(), n1->getNodeIdent(), n2->getNodeIdent(), lstate);
+            //GUIlinks.setLinkMap(n1->getNodeIdent(), n2->getNodeIdent(), GUIlinks.getLinksSize()-2);
+        }
+    }
+
+    void joinNodes2(Node* n1, Node* n2, const size_t& link_weight, const LinkStat& lstate){
+        size_t loc1 = node_locs[n1->getNodeIdent()];
+        size_t loc2 = node_locs[n2->getNodeIdent()];
+
+        //update node 2's node_loc to be the same as node 1 if it isn't already
+        if (loc1 != loc2){
+            std::unordered_set<ull> visited;
+            //update node_locs map for the graph thats getting moved
+            moveGraphLoc(all_graphs[loc2], visited, loc1);
+            all_graphs[loc2] = NULL;
+            open_locs.push_back(loc2);
+            num_graphs--;
         }
 
-        //remove graph getting moved from all_graphs if locations are different
-        //record open position in open_locs
-        //CHANGED: got rid of ->  && !alreadyConnected
-        // if (loc1 != loc2){
-        //     all_graphs[loc2] = NULL;
-        //     open_locs.push_back(loc2);
-        // }
+        //Check to see if nodes are connected
+        bool alreadyConnected = 0;
+        std::vector<ADJ_NODE> links = n1->getNodeLinks();
+        for (size_t i =0; i < links.size(); ++i){
+            Node* check = std::get<0>(links[i]);
+            if (check->getNodeIdent() == n2->getNodeIdent()){
+                alreadyConnected = 1;
+                break;
+            }
+        }
+
+        //connect the two nodes together if not already connected
+        if (!alreadyConnected){
+            ull link_ident = getNewLinkIdent();
+            n1->addLinktoNode(n2, link_weight, link_ident);
+            n2->addLinktoNode(n1, link_weight, link_ident);
+            GUIlinks.addLink(n1->getNodePos(), n2->getNodePos(), n1->getNodeIdent(), n2->getNodeIdent(), lstate);
+        }
     }
 
     //unjoins two nodes
@@ -585,7 +610,7 @@ public:
             // remove link from NTD to children node and GUI links
             child->remLinktoNode(NTDident);
             GUIlinks.removeLink(NTDident, child_ident);
-            GUIlinks.removeLinkMap(NTDident, child_ident);
+            //GUIlinks.removeLinkMap(NTDident, child_ident);
         }
 
 
@@ -782,7 +807,7 @@ public:
         //after all current links have been visited delete memory of current node
         std::cout << "\tdeleting Node: " << curr->getNodeIdent() << std::endl;
         delete curr;
-        curr = nullptr;
+        curr = NULL;
         if (curr){
             std::cout << "\tNode exists?? - " << curr->getNodeIdent() << std::endl;
         }
