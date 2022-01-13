@@ -25,12 +25,11 @@ typedef unsigned long long ull;
 Node class:
     - Node identifier
     - Circle shape??
-    - links (tuple: curr node, link weight, link identifier)
+    - links (tuple: curr node, link weight, link identifier, link type (can main node access curr node))
 */
 class Node{
 public:
-    typedef std::tuple<Node*, size_t, ull> ADJ_NODE;
-    typedef std::tuple<Node*, size_t, ull, bool> ADJ_NODE2;
+    typedef std::tuple<Node*, size_t, ull, bool> ADJ_NODE;
     typedef std::vector<ADJ_NODE> NODE_VEC;
 private:
     ull ident;                              //Nodes identifying number
@@ -102,13 +101,33 @@ public:
     }
 
     //add a new linked up node manually
-    inline void addLinktoNode(Node* addNode, size_t lw, ull li){
-        links.push_back(std::make_tuple(addNode, lw, li));
+    inline void addLinktoNode(Node* addNode, size_t lw, ull li, bool connection){
+        links.push_back(std::make_tuple(addNode, lw, li, connection));
     }
 
     //add a new linked up node by tuple
     inline void addLinktoNode(ADJ_NODE addNode){
         links.push_back(addNode);
+    }
+
+    //changes the link type of an existing node link
+    void changeLinkType(const size_t idx, const bool linkStat){
+        if (idx >= 0 && idx < links.size()){
+            std::get<3>(links[idx]) = linkStat;
+        }else{
+            std::cout << "\nCHANGE LINK TYPE - Error: invalid index given - exiting\n";
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    //changes the link weight of an existing node link
+    void changeLinkWeight(const size_t idx, ull lw){
+        if (idx >= 0 && idx < links.size()){
+            std::get<1>(links[idx]) = lw;
+        }else{
+            std::cout << "\nCHANGE LINK WEIGHT - Error: invalid index given - exiting\n";
+            exit(EXIT_FAILURE);
+        }
     }
 
     inline void printCurrNode(){

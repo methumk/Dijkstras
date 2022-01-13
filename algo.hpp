@@ -12,7 +12,7 @@ public:
     //map<curr node identifier, tuple<distance from node to curr node, from node identifier>>
     typedef std::unordered_map<ull, std::tuple<long long, ull>> weight_map;
     //typedef for node links
-    typedef std::tuple<Node*, size_t, ull> ADJ_NODE;
+    typedef std::tuple<Node*, size_t, ull, bool> ADJ_NODE;
 public:
 
     void nodesToWM(Node* curr, std::unordered_set<Node*>& visited, weight_map& wm){

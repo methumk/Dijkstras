@@ -23,7 +23,7 @@ Graph class:
 
 class Graph{
 private:
-    typedef std::tuple<Node*, size_t, ull> ADJ_NODE;
+    typedef std::tuple<Node*, size_t, ull, bool> ADJ_NODE;
     size_t win_width, win_height;                                   //keeps track of the interface window width and height
     size_t num_graphs;                                              //keeps track of the total number of graphs
     ull curr_node_ident;                                            //used to create a new unique node identifier
@@ -411,7 +411,7 @@ public:
             //note if you connect any node from an index in all_graphs with another one, it becomes one graph so you can get rid of the entire pointer on one side
             //have to change node locs of the graph you are moving though
     //right now just going to give it node identifier parameter
-    void joinNodes(ull ident1, ull ident2, size_t link_weight, const LinkStat& lstate){
+    /* void joinNodes(ull ident1, ull ident2, size_t link_weight, const LinkStat& lstate){
         if (ident1 == ident2){
             std::cout << "ERROR in graph.joinNodes: cannot join node with itself EXITING\n";
             exit(EXIT_FAILURE);
@@ -508,10 +508,13 @@ public:
             //GUIlinks.setLinkMap(n1->getNodeIdent(), n2->getNodeIdent(), GUIlinks.getLinksSize()-2);
         }
     }
+ */
 
-    void joinNodes2(Node* n1, Node* n2, const size_t& link_weight, const LinkStat& lstate){
-        size_t loc1 = node_locs[n1->getNodeIdent()];
-        size_t loc2 = node_locs[n2->getNodeIdent()];
+    void joinNodes(Node* n1, Node* n2, const size_t& link_weight, const LinkStat& lstate){
+        ull n1Ident = n1->getNodeIdent();
+        ull n2Ident = n2->getNodeIdent();
+        size_t loc1 = node_locs[n1Ident];
+        size_t loc2 = node_locs[n2Ident];
 
         //update node 2's node_loc to be the same as node 1 if it isn't already
         if (loc1 != loc2){
@@ -523,23 +526,83 @@ public:
             num_graphs--;
         }
 
-        //Check to see if nodes are connected
+        //Check to see link status between both nodes
         bool alreadyConnected = 0;
+        bool n1_con;
         std::vector<ADJ_NODE> links = n1->getNodeLinks();
+        size_t n1_l_idx;
         for (size_t i =0; i < links.size(); ++i){
             Node* check = std::get<0>(links[i]);
             if (check->getNodeIdent() == n2->getNodeIdent()){
                 alreadyConnected = 1;
+                n1_l_idx = i;
+                n1_con = std::get<3>(links[i]);
                 break;
             }
         }
 
+        
+        //determine how to link n1 and n2 by link state
+        bool n1ConnectionStat = true;
+        bool n2ConnectionStat = true;
+        if (lstate == LinkStat::SinglyTo)
+            n2ConnectionStat = false;
+
         //connect the two nodes together if not already connected
         if (!alreadyConnected){
             ull link_ident = getNewLinkIdent();
-            n1->addLinktoNode(n2, link_weight, link_ident);
-            n2->addLinktoNode(n1, link_weight, link_ident);
-            GUIlinks.addLink(n1->getNodePos(), n2->getNodePos(), n1->getNodeIdent(), n2->getNodeIdent(), lstate);
+
+            n1->addLinktoNode(n2, link_weight, link_ident, n1ConnectionStat);
+            n2->addLinktoNode(n1, link_weight, link_ident, n2ConnectionStat);
+            GUIlinks.addLink(n1->getNodePos(), n2->getNodePos(), n1Ident, n2Ident, lstate);
+
+        }else{
+            //determine connection from n1 to n2
+            size_t n2_l_idx;
+            bool n2_con;
+            std::vector<ADJ_NODE> links2 = n2->getNodeLinks();
+            for (size_t i =0; i < links2.size(); ++i){
+                Node* check = std::get<0>(links2[i]);
+                if (check->getNodeIdent() == n1->getNodeIdent()){
+                    n2_l_idx = i;
+                    n2_con = std::get<3>(links2[i]);
+                    break;
+                }
+            }
+
+            std::cout << "\n\tlinkage - already connected:" << n1_con << " " << n2_con << " \n";
+            std::cout << "\tconnecting to: " << n1ConnectionStat << " " << n2ConnectionStat << " \n";
+
+            //update link status of already created nodes
+            if (n1ConnectionStat != n1_con || n2ConnectionStat != n2_con){
+                std::cout << "\tUPDATED LINK\n";
+                n1->changeLinkType(n1_l_idx, n1ConnectionStat);
+                n2->changeLinkType(n2_l_idx, n2ConnectionStat);
+
+                GUIlinks.removeLink(n1Ident, n2Ident);
+                GUIlinks.addLink(n1->getNodePos(), n2->getNodePos(), n1Ident, n2Ident, lstate);
+
+                /* 
+                //DEBUGGING - CAN REMOVE LATER
+                std::vector<ADJ_NODE> links = n1->getNodeLinks();
+                for (size_t i =0; i < links.size(); ++i){
+                    Node* check = std::get<0>(links[i]);
+                    if (check->getNodeIdent() == n2->getNodeIdent()){
+                        std::cout << "\tn1->n2: " << std::get<3>(links[i]) << " ";
+                        break;
+                    }
+                }
+
+                std::vector<ADJ_NODE> links2 = n2->getNodeLinks();
+                for (size_t i =0; i < links2.size(); ++i){
+                    Node* check = std::get<0>(links2[i]);
+                    if (check->getNodeIdent() == n1->getNodeIdent()){
+                        std::cout << "n2->n1: " << std::get<3>(links2[i]) << "\n";
+                        break;
+                    }
+                } */
+
+            }
         }
     }
 
@@ -683,14 +746,16 @@ public:
         }
 
         //update link weight for n1
-        ADJ_NODE& change = l1[idx2];
-        std::get<1>(change) = lw;
-        l1[idx2] = change;
+        // ADJ_NODE& change = l1[idx2];
+        // std::get<1>(change) = lw;
+        // l1[idx2] = change;
+        n1->changeLinkWeight(idx2, lw);
 
         //update link weight for n2
-        change = l2[idx1];
-        std::get<1>(change) = lw;
-        l2[idx1] = change;
+        // change = l2[idx1];
+        // std::get<1>(change) = lw;
+        // l2[idx1] = change;
+        n2->changeLinkWeight(idx1, lw);
     }
 
     //updates the link connection weight between two nodes by identifier to a given link weight
