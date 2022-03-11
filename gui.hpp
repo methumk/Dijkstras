@@ -122,6 +122,7 @@ public:
         }
     }
 
+    //deletes the node
     void removeNode(const sf::RenderWindow* win){
         Node* NTD = mouseOverNode(win, NODE_RADIUS);
         if (NTD){
@@ -135,8 +136,10 @@ public:
         //check that nodes being joined aren't the same
         if (n2 != NULL && n1 != NULL && n1 != n2){
             //have gui ask for node link weight
-            int link_weight;
             std::cout << "4- Linking nodes\n";
+            int link_weight = -1;
+
+            //std::string title = "Set link weight for nodes" + std::to_string(n1->getNodeIdent()) + " and " + std::to_string(n2->getNodeIdent());
             allgraphs->joinNodes(n1, n2, 20, lstate);
         }
     }

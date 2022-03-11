@@ -16,7 +16,7 @@ Graph class:
 #include <unordered_map>
 #include <unordered_set>
 #include <string>
-#include <cmath>
+#include <math.h>
 
 #include "node.hpp"
 
@@ -510,6 +510,7 @@ public:
     }
  */
 
+    //joining nodes n1 (from node), to n2 (to node)
     void joinNodes(Node* n1, Node* n2, const size_t& link_weight, const LinkStat& lstate){
         ull n1Ident = n1->getNodeIdent();
         ull n2Ident = n2->getNodeIdent();
@@ -555,7 +556,7 @@ public:
             n1->addLinktoNode(n2, link_weight, link_ident, n1ConnectionStat);
             n2->addLinktoNode(n1, link_weight, link_ident, n2ConnectionStat);
             GUIlinks.addLink(n1->getNodePos(), n2->getNodePos(), n1Ident, n2Ident, lstate);
-
+            std::cout << "added node link\n";
         }else{
             //determine connection from n1 to n2
             size_t n2_l_idx;
