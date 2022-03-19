@@ -53,6 +53,7 @@ int main(){
 
     static bool leftPressed = false, rigthPressed = false, middlePressed = false, dragging = false;
     static SimulState state = SimulState::AddNodeMode;
+    static AlgoToRun runningAlgo = NoAlgo;
     static LinkStat link_state = LinkStat::Doubly;
     sf::Vector2i left_mpos, curr_mpos;
     Node *right_clicked_on_node = NULL, *left_clicked_on_node = NULL;
@@ -153,9 +154,12 @@ int main(){
         game.onDragNode(&window, left_clicked_on_node, left_mpos, dragging);
 
         //draw ImGui objects
-        ImGui::Begin("Graph Viewer");
-        game.drawGraphViewer();
-        ImGui::End();
+        game.drawIMGraphViewer();
+        game.drawIMAlgoMenu();
+        game.runAlgoFromMenu();
+        
+        //Needs to be run on thread? - Needs to let user do whatever even though waiting for input
+        //game.runAlgoFromPanel();
 
         //render SFML objects
         window.clear();

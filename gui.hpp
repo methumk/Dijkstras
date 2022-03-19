@@ -10,12 +10,14 @@ gui.hpp
 class Gui{
 private:
     Graph* allgraphs;
+    Algos algoMan;
     sf::Font font;
     size_t win_width, win_height;
     std::vector<sf::Vertex> shadowLink;
     //sf::Vertex* shadowLink[2];
 
 public:
+
     Gui(const int& w_width, const int& w_height){
         //try to load in font needed to display text
         if (!font.loadFromFile("./Dijkstras/OpenSans-Semibold.ttf")){
@@ -93,6 +95,7 @@ public:
     }
 
     void checkNodeExist(Node* n){
+        //This function is literally useless
         if (n){
             Node* x = allgraphs->REVISEDfindNode(n->getNodeIdent());
         }
@@ -180,7 +183,7 @@ public:
         }
     }
 
-    // resets the shadow link v
+    // resets the shadow link
     inline void resetShadowLink(){
         shadowLink.clear();
     }
@@ -193,14 +196,14 @@ public:
             - render graph viewer
             - render graphs
      */
-    void drawGraphViewer(){
+    void drawIMGraphViewer(){
+        ImGui::Begin("Graph Viewer");
         allgraphs->drawGraphViewer();
+        ImGui::End();
     }
 
     //renders all elements of all the graphs
     void renderAllGraphs(sf::RenderWindow* win){
-        // win->clear();
-
         if (shadowLink.size() == 2){
             win->draw(shadowLink.data(), shadowLink.size(), sf::Lines);
         }
@@ -210,11 +213,17 @@ public:
         for (size_t i=0; i < ags; ++i){
             allgraphs->drawAllNodesinGraph(i, win);
         }
-
-        // win->display();
     }
 
+    void drawIMAlgoMenu(){
+        ImGui::Begin("Run Algorithms");
+        algoMan.displayAlgosMenu();
+        ImGui::End();
+    }
 
+    void runAlgoFromMenu(){
+        algoMan.runFromAlgoMenu(allgraphs);
+    }
 
 
     //clears the entire screen of nodes and links

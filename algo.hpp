@@ -6,14 +6,79 @@ algo.hpp
 #include <climits>
 #include "graph.hpp"
 
+//List of possible algos the user can run
+static const std::string algo_list[] = {"Graph DFS", "Graph BFS", "Dijkstra"};
+enum AlgoToRun {DFS, BFS, Dijkstra, NoAlgo};
 
-class Dijkstra{
+class Algos{
 public:
     //map<curr node identifier, tuple<distance from node to curr node, from node identifier>>
     typedef std::unordered_map<ull, std::tuple<long long, ull>> weight_map;
     //typedef for node links
     typedef std::tuple<Node*, size_t, ull, bool> ADJ_NODE;
+    AlgoToRun runAlgo;
 public:
+    Algos(){
+        //initialize to no algo running
+        runAlgo = NoAlgo;
+    }
+
+    //Displays a Menu that allows user to pick which algorithm to run
+    void displayAlgosMenu(){
+        for (std::string algo : algo_list){
+            if (ImGui::Button(algo.c_str())){
+                std::cout << "Clicked on button: " << algo << std::endl;
+                if (algo == "Graph DFS"){
+                    runAlgo = DFS;
+                }else if (algo == "Graph BFS"){
+                    runAlgo = BFS;
+                }else if (algo == "Dijkstra"){
+                    runAlgo = Dijkstra;
+                }
+                
+            }
+        }
+    }
+
+    void runFromAlgoMenu(Graph* allGraphs){
+        switch(runAlgo){
+            case DFS:
+                graphDFSManager();
+                break;
+            case BFS:
+                //Implement BFS
+                ImGui::Begin("BFS");
+                ImGui::End();
+                break;
+            case Dijkstra:
+                //Implement Dijkstra
+                ImGui::Begin("Dijkstra");
+                ImGui::End();
+                break;
+            
+            default: //Don't run any algorithm if NoAlgo
+                break;
+        }
+    }
+
+    void graphDFSManager(){
+        ImGui::Begin("DFS");
+        const char* title = "Click on a node to start or enter an id";
+        char inputNode[256];
+        memset(inputNode, '\0', 256);
+
+        ImGui::Text(title);
+        ImGui::InputText("Enter Id of node to start", inputNode, 255);
+        //run algorithm
+
+        //set the current running Algo to none
+        //runAlgo = NoAlgo;
+        ImGui::End();
+    }
+
+    void runGraphDFS(Node* start){
+
+    }
 
     void nodesToWM(Node* curr, std::unordered_set<Node*>& visited, weight_map& wm){
         //mark current node as visited and save it in weight map
@@ -43,11 +108,6 @@ public:
         std::unordered_set<Node*> setwm_visited;
         //save all nodes to the weight map 
         nodesToWM(graphs.getGraphHead(graph_loc), setwm_visited, wm);
-
-        
-
-        
-
 
     }
 };
