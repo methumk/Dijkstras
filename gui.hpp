@@ -9,7 +9,7 @@ gui.hpp
 
 class Gui{
 private:
-    Graph* allgraphs;
+    Graph* graphMan;
     Algos algoMan;
     sf::Font font;
     size_t win_width, win_height;
@@ -27,7 +27,7 @@ public:
 
         win_width = w_width;
         win_height = w_height;
-        allgraphs = new Graph(win_width, win_height);
+        graphMan = new Graph(win_width, win_height);
     }
 
     //returns the euclidean distance between two integer points
@@ -56,7 +56,7 @@ public:
 
     //checks a reduced range based on the mouse position to determine if the mouse is over a node
     Node* mouseOverNode(const sf::RenderWindow* win, size_t node_radius){
-        Node** iloc = allgraphs->getNodeIlocs();
+        Node** iloc = graphMan->getNodeIlocs();
         sf::Vector2i mpos = sf::Mouse::getPosition(*win);
 
         //determine if mouse is over valid range
@@ -97,7 +97,7 @@ public:
     void checkNodeExist(Node* n){
         //This function is literally useless
         if (n){
-            Node* x = allgraphs->REVISEDfindNode(n->getNodeIdent());
+            Node* x = graphMan->findNode(n->getNodeIdent());
         }
     }
 
@@ -121,7 +121,7 @@ public:
         if (!mouseOverNode(win, NODE_RADIUS*2)){
             sf::Vector2i pos = sf::Mouse::getPosition(*win);
             std::cout << "2 - node created at position: " << win_width*pos.y + pos.x << " x: " << pos.x << " y: " << pos.y << '\n';
-            allgraphs->createNewNode(pos, font);
+            graphMan->createNewNode(pos, font);
         }
     }
 
@@ -130,8 +130,12 @@ public:
         Node* NTD = mouseOverNode(win, NODE_RADIUS);
         if (NTD){
             std::cout << "3 - Deleting node: " << NTD->getNodeIdent() << "\n";
-            allgraphs->deleteNode(NTD);
+            graphMan->deleteNode(NTD);
         }
+    }
+
+    void removeLink(){
+        
     }
 
     //attempt to link two not Null and different nodes with each other
@@ -143,7 +147,7 @@ public:
             int link_weight = -1;
 
             //std::string title = "Set link weight for nodes" + std::to_string(n1->getNodeIdent()) + " and " + std::to_string(n2->getNodeIdent());
-            allgraphs->joinNodes(n1, n2, 20, lstate);
+            graphMan->joinNodes(n1, n2, 20, lstate);
         }
     }
 
@@ -198,7 +202,7 @@ public:
      */
     void drawIMGraphViewer(){
         ImGui::Begin("Graph Viewer");
-        allgraphs->drawGraphViewer();
+        graphMan->drawGraphViewer();
         ImGui::End();
     }
 
@@ -208,10 +212,10 @@ public:
             win->draw(shadowLink.data(), shadowLink.size(), sf::Lines);
         }
 
-        allgraphs->drawAllLinks(win);
-        size_t ags = allgraphs->getAllGraphSize();
+        graphMan->drawAllLinks(win);
+        size_t ags = graphMan->getAllGraphSize();
         for (size_t i=0; i < ags; ++i){
-            allgraphs->drawAllNodesinGraph(i, win);
+            graphMan->drawAllNodesinGraph(i, win);
         }
     }
 
@@ -222,17 +226,17 @@ public:
     }
 
     void runAlgoFromMenu(){
-        algoMan.runFromAlgoMenu(allgraphs);
+        algoMan.runFromAlgoMenu(graphMan);
     }
 
 
     //clears the entire screen of nodes and links
     void clearScreen(){
-        delete allgraphs;
-        allgraphs = new Graph(win_width, win_height);
+        delete graphMan;
+        graphMan = new Graph(win_width, win_height);
     }
 
     ~Gui(){
-        delete allgraphs;
+        delete graphMan;
     }
 };  
