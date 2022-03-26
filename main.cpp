@@ -85,7 +85,8 @@ int main(){
                         }else if (state == SimulState::RemoveNodeMode){
                             game.removeNode(&window);
                         }else if (state == SimulState::RemoveLinkMode){
-                            game.removeLink();
+                            left_clicked_on_node = game.mouseOverNode(&window, NODE_RADIUS);
+                            game.setShadowRemoveLink(left_clicked_on_node);
                         }
                         
                     }else if (sf::Mouse::isButtonPressed(sf::Mouse::Right)){
@@ -105,8 +106,11 @@ int main(){
                         if (state == SimulState::AddLinkMode){
                             game.linkNodes(left_clicked_on_node, game.mouseOverNode(&window, NODE_RADIUS), link_state);
                             game.resetShadowLink();
-                            left_clicked_on_node = NULL;
+                        }else if (state == SimulState::RemoveLinkMode){
+                            game.removeLink(left_clicked_on_node, game.mouseOverNode(&window, NODE_RADIUS));
+                            game.resetShadowRemoveLink();
                         }
+                        left_clicked_on_node = NULL;
 
                     }else if (event.mouseButton.button == sf::Mouse::Right){
                         //delete node, when delete button toggled
@@ -157,8 +161,13 @@ int main(){
         }
         ImGui::SFML::Update(window, deltaClock.restart());
 
-        // handle link and node dragging
-        game.moveShadowLink(left_clicked_on_node, &window, link_state);
+        // handle shadow links for adding and removing links
+        if (state == SimulState::AddLinkMode)
+            game.moveShadowLink(left_clicked_on_node, &window, link_state);
+        else if (state == SimulState::RemoveLinkMode){
+            game.moveShadowRemoveLink(left_clicked_on_node, &window);
+        }
+
         //game.onDragNode(&window, right_clicked_on_node, left_mpos, dragging);
 
         //draw ImGui objects

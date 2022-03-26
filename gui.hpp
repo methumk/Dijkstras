@@ -14,6 +14,7 @@ private:
     sf::Font font;
     size_t win_width, win_height;
     std::vector<sf::Vertex> shadowLink;
+    std::vector<sf::Vertex> shadowRemoveLink;
     //sf::Vertex* shadowLink[2];
 
 public:
@@ -134,8 +135,12 @@ public:
         }
     }
 
-    void removeLink(){
-        
+    void removeLink(Node* n1, Node* n2){
+        //check that nodes exist and aren't the same
+        if (n2 != NULL && n1 != NULL && n1 != n2){
+            std::cout << "UNLINKING NODES\n";
+            graphMan->unJoinNodes(n1, n2);
+        }
     }
 
     //attempt to link two not Null and different nodes with each other
@@ -173,7 +178,7 @@ public:
     }
 
     // Moves the shadow link end point to show where the user is trying to link
-    void moveShadowLink(Node* n1, sf::RenderWindow* win, const LinkStat& lstate){
+    void moveShadowLink(Node* n1, const sf::RenderWindow* win, const LinkStat& lstate){
         if (n1){
             sf::Vector2f pos = sf::Vector2f(sf::Mouse::getPosition(*win));
             
@@ -190,6 +195,29 @@ public:
     // resets the shadow link
     inline void resetShadowLink(){
         shadowLink.clear();
+    }
+
+    //Creates a shadow link to help the user delete a link between two nodes
+    void setShadowRemoveLink(Node* n1){
+        if (n1){
+            shadowRemoveLink.push_back(sf::Vertex(n1->getNodePos(), sf::Color::Red));
+            shadowRemoveLink.push_back(sf::Vertex(n1->getNodePos(), sf::Color::Red));
+        }
+    }
+
+    //moves the shadow link to point to where user is pointing to
+    void moveShadowRemoveLink(Node* n1, const sf::RenderWindow* win){
+        if (n1){
+            sf::Vector2f pos = sf::Vector2f(sf::Mouse::getPosition(*win));
+            if (shadowRemoveLink.size() == 2){
+                shadowRemoveLink[1] = sf::Vertex(pos, sf::Color::Red);
+            }
+                
+        }
+    }
+
+    inline void resetShadowRemoveLink(){
+        shadowRemoveLink.clear();
     }
     
 
@@ -210,6 +238,9 @@ public:
     void renderAllGraphs(sf::RenderWindow* win){
         if (shadowLink.size() == 2){
             win->draw(shadowLink.data(), shadowLink.size(), sf::Lines);
+        }
+        if (shadowRemoveLink.size() == 2){
+            win->draw(shadowRemoveLink.data(), shadowRemoveLink.size(), sf::Lines);
         }
 
         graphMan->drawAllLinks(win);

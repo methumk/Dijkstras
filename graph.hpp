@@ -92,7 +92,7 @@ public:
         }
     }
 
-    // record nodes at a certain graph position
+    // record nodes at a certain graph position to IMGUI graph table
     void recordAllNodes(Node* curr, std::unordered_set<ull>& visited, std::string& allnodes){
         ull currNode = curr->getNodeIdent();
         visited.insert(currNode);
@@ -331,7 +331,7 @@ public:
 
     //runs DFS to find node with given identifier
     //REVISED: you don't have to tell which all_graphs index to look into
-    Node* REVISEDfindNode(ull ident){
+    Node* findNode(ull ident){
         std::cout << "\nFINDING NODE" << ident << "\n";
         if (!node_locs.count(ident)){
             std::cout << "\tERROR in graph.REVISEDfindNode - Node location not recorded in map - EXITING\n";
@@ -607,9 +607,65 @@ public:
         }
     }
 
-    //unjoins two nodes
-    void unJoinNodes(){
+    //removes the link between two nodes and manages graph movement for those nodes
+    /* 
+        @TODO 0->1->2->3, removing link from 3 to 1,
+                            210 gets put in new loc,
+                            012 exists in original loc,
+                             and 3 removed from GUI
+    */
+    void unJoinNodes(Node* n1, Node* n2){
+        //Don't attempt to unjoin nodes if they aren't in the same graph
+        size_t graphLoc = node_locs[n2->getNodeIdent()];
+        std::cout << "head of graph is " << all_graphs[graphLoc]->getNodeIdent() << std::endl;
+        std::cout << "N1: " << n1->getNodeIdent() << " N2: " << n2->getNodeIdent() << std::endl;
+        if (graphLoc != node_locs[n1->getNodeIdent()])
+            return;    
 
+        //erase instance of each node in each others links
+        n1->remLinktoNode(n2->getNodeIdent());
+        n2->remLinktoNode(n1->getNodeIdent());
+        
+        //determine if a node needs to be moved to a new graph
+        std::unordered_set<ull> visited;
+        Node* inGraph = graphDFS(n1, n2->getNodeIdent(), visited);
+        visited.clear();
+
+        //Check whether n2 or n1 should be moved
+        Node* graphHead = all_graphs[graphLoc];
+        bool moveN1 = graphDFS(graphHead, n2->getNodeIdent(), visited) == n2 ? true : false;
+        visited.clear();
+
+        //Establish n1 or n2 as its own graph if n1 and n2 are separate graphs after link removal
+        if (inGraph == NULL){     
+            //determine position of graph n1 or n2 will go to
+            size_t new_loc = all_graphs.size();
+            if (open_locs.size() > 0){
+                new_loc = open_locs[0];
+                open_locs.erase(open_locs.begin());
+            }
+            if (new_loc == all_graphs.size()){
+                all_graphs.push_back(NULL);
+            }
+
+            //if n2 is not head of graph move n2, otherwise move n1 to new graph
+            if (moveN1){
+                std::cout << "MOVING N1\n";
+                std::cout << "MOVING NODE " << n1->getNodeIdent() << " TO GRAPH " << new_loc << std::endl;
+                all_graphs[new_loc] = n1;
+                moveGraphLoc(n1, visited, new_loc);
+            }else{
+                std::cout << "N2(" << n2->getNodeIdent() <<") " "is NOT head of graph\n";
+                std::cout << "MOVING NODE " << n2->getNodeIdent() << " TO GRAPH " << new_loc << std::endl;
+                all_graphs[new_loc] = n2;
+                moveGraphLoc(n2, visited, new_loc);
+            }
+
+            num_graphs++;
+        }
+
+        //remove the UI links
+        GUIlinks.removeLink(n1->getNodeIdent(), n2->getNodeIdent());
     }
 
 
@@ -762,9 +818,9 @@ public:
     //updates the link connection weight between two nodes by identifier to a given link weight
     void updateNodeLink(ull ident1, ull ident2, size_t lw){
         std::cout << "UpdateNodeLin:\n\tSearching n1\n";
-        Node* n1 = REVISEDfindNode(ident1);
+        Node* n1 = findNode(ident1);
         std::cout << "\tSearching n2\n";
-        Node* n2 = REVISEDfindNode(ident2);
+        Node* n2 = findNode(ident2);
         if (n1 == NULL){
             std::cout << "UpdateNodeLink: Error - n1 null\n";
             exit(EXIT_FAILURE);
@@ -820,8 +876,8 @@ public:
 
     //debug function to see the link weight between two nodes
     void displayLinkWeight(ull ident1, ull ident2){
-        Node* n1 = REVISEDfindNode(ident1);
-        Node* n2 = REVISEDfindNode(ident2);
+        Node* n1 = findNode(ident1);
+        Node* n2 = findNode(ident2);
 
         std::vector<ADJ_NODE> l1 = n1->getNodeLinks();
         std::vector<ADJ_NODE> l2 = n2->getNodeLinks();

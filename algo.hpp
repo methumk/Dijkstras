@@ -33,17 +33,17 @@ public:
                 }else if (algo == "Graph BFS"){
                     runAlgo = BFS;
                 }else if (algo == "Dijkstra"){
-                    runAlgo = Dijkstra;
+                    runAlgo = Dijkstra;                    
                 }
                 
             }
         }
     }
 
-    void runFromAlgoMenu(Graph* allGraphs){
+    void runFromAlgoMenu(Graph* graphMan){
         switch(runAlgo){
             case DFS:
-                graphDFSManager();
+                graphDFSManager(graphMan);
                 break;
             case BFS:
                 //Implement BFS
@@ -61,15 +61,30 @@ public:
         }
     }
 
-    void graphDFSManager(){
+    bool checkPossibleID(char* id, int len){
+        for (int i=0; i < len; ++i){
+            if (!std::isdigit(id[i]))
+                return false;
+        }
+        return true;
+    }
+
+    void graphDFSManager(Graph* graphMan){
         ImGui::Begin("DFS");
-        const char* title = "Click on a node to start or enter an id";
+        ImGui::Text("Click on a node to start");
+
         char inputNode[256];
         memset(inputNode, '\0', 256);
-
-        ImGui::Text(title);
         ImGui::InputText("Enter Id of node to start", inputNode, 255);
-        //run algorithm
+        std::cout << "\tDFS got: " << inputNode << std::endl;
+        
+
+        /* Node* start = NULL, *end = NULL;
+        if (!checkPossibleID(inputNode, 256)){
+            ull startIdent = std::stoull(inputNode);
+            std::cout << "Algo DFS - start ident: " << startIdent << std::endl;
+            start = graphMan->findNode(startIdent);
+        } */
 
         //set the current running Algo to none
         //runAlgo = NoAlgo;
@@ -78,6 +93,7 @@ public:
 
     void runGraphDFS(Node* start){
 
+        runAlgo = NoAlgo;
     }
 
     void nodesToWM(Node* curr, std::unordered_set<Node*>& visited, weight_map& wm){
