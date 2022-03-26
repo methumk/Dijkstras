@@ -7,6 +7,8 @@ gui.hpp
 #include <SFML/Graphics.hpp>
 #include "algo.hpp"
 
+#define REM_SHADOW_COLOR sf::Color::Red
+
 class Gui{
 private:
     Graph* graphMan;
@@ -168,8 +170,8 @@ public:
     void setShadowLink(Node* n1, const LinkStat& lstate){
         if (n1){
             sf::Color lcolor;
-            if (lstate == LinkStat::Doubly) lcolor = sf::Color::Green;
-            else                            lcolor = sf::Color::Yellow;
+            if (lstate == LinkStat::Doubly) lcolor = DOUBLY_COLOR;
+            else                            lcolor = SINGLY_COLOR;
 
             shadowLink.push_back(sf::Vertex(n1->getNodePos(), lcolor));
             shadowLink.push_back(sf::Vertex(n1->getNodePos(), lcolor));
@@ -183,8 +185,8 @@ public:
             sf::Vector2f pos = sf::Vector2f(sf::Mouse::getPosition(*win));
             
             sf::Color lcolor;
-            if (lstate == LinkStat::Doubly) lcolor = sf::Color::Green;
-            else                            lcolor = sf::Color::Yellow;
+            if (lstate == LinkStat::Doubly) lcolor = DOUBLY_COLOR;
+            else                            lcolor = SINGLY_COLOR;
 
             if (shadowLink.size() == 2){
                 shadowLink[1] = sf::Vertex(pos, lcolor);
@@ -200,8 +202,8 @@ public:
     //Creates a shadow link to help the user delete a link between two nodes
     void setShadowRemoveLink(Node* n1){
         if (n1){
-            shadowRemoveLink.push_back(sf::Vertex(n1->getNodePos(), sf::Color::Red));
-            shadowRemoveLink.push_back(sf::Vertex(n1->getNodePos(), sf::Color::Red));
+            shadowRemoveLink.push_back(sf::Vertex(n1->getNodePos(), REM_SHADOW_COLOR));
+            shadowRemoveLink.push_back(sf::Vertex(n1->getNodePos(), REM_SHADOW_COLOR));
         }
     }
 
@@ -210,7 +212,7 @@ public:
         if (n1){
             sf::Vector2f pos = sf::Vector2f(sf::Mouse::getPosition(*win));
             if (shadowRemoveLink.size() == 2){
-                shadowRemoveLink[1] = sf::Vertex(pos, sf::Color::Red);
+                shadowRemoveLink[1] = sf::Vertex(pos, REM_SHADOW_COLOR);
             }
                 
         }

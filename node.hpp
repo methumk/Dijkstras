@@ -19,7 +19,9 @@ structure.hpp
 //Define ll for identifiers
 typedef long long ll;
 #define NODE_RADIUS 30
-
+#define NODE_FILL_COLOR sf::Color::Blue
+#define NODE_OUT_COLOR sf::Color::White
+#define NODE_TEXT_COLOR sf::Color::Red
 
 /*
 Node class:
@@ -44,8 +46,8 @@ public:
         GUInode.setRadius(NODE_RADIUS);
         GUInode.setOrigin(NODE_RADIUS, NODE_RADIUS);
         GUInode.setPosition(pos);
-        GUInode.setFillColor(sf::Color::Blue);
-        GUInode.setOutlineColor(sf::Color::White);
+        GUInode.setFillColor(NODE_FILL_COLOR);
+        GUInode.setOutlineColor(NODE_OUT_COLOR);
         GUInode.setOutlineThickness(2.f);
 
         //set information about node text
@@ -54,7 +56,7 @@ public:
         textId.setCharacterSize(18);
         textId.setOrigin(textId.getLocalBounds().width/2., textId.getLocalBounds().height/2.);
         textId.setPosition(pos);
-        textId.setFillColor(sf::Color::Red);  
+        textId.setFillColor(NODE_TEXT_COLOR);  
     }   
 
     //renders individual node and text
@@ -75,14 +77,14 @@ public:
     }
 
     //creates the node for node visualization in the GUI
-    void addNodeShape(float radius, sf::Vector2f& pos, sf::Color color){
+    /* void addNodeShape(float radius, sf::Vector2f& pos, sf::Color color){
         GUInode.setRadius(radius);
         GUInode.setOrigin(radius, radius);
         GUInode.setPosition(pos);
         GUInode.setFillColor(color);
         GUInode.setOutlineColor(sf::Color::Blue);
         GUInode.setOutlineThickness(2.f);
-    }
+    } */
 
     //checks whether a node is singly linked to another node
     //returns true if the from node is connected to the to node
