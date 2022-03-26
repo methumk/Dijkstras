@@ -17,6 +17,8 @@ links class:
 //Define the linkstatus possibilities between two nodes
 enum class LinkStat {Doubly, SinglyTo};
 #define ARROW_LEN 10
+#define DOUBLY_COLOR sf::Color::Green
+#define SINGLY_COLOR sf::Color::Yellow
 // #ifndef PI_4
 // #define PI_4 0.785398163397448
 // #endif
@@ -88,8 +90,8 @@ public:
         sf::Vector2f midpoint((p1.x + p2.x)/2, (p1.y + p2.y)/2);
         //set link color based on link state
         sf::Color lcolor;
-        if (lstate == LinkStat::Doubly) lcolor = sf::Color::Green;
-        else                            lcolor = sf::Color::Yellow;
+        if (lstate == LinkStat::Doubly) lcolor = DOUBLY_COLOR;
+        else                            lcolor = SINGLY_COLOR;
 
         //add link based on color
         all_links.push_back(sf::Vertex(p1, lcolor));
@@ -100,7 +102,7 @@ public:
         std::string n_l_identifier2 = std::to_string(node2) + "_" + std::to_string(node1);
 
         //update link weight values
-        sf::Vector2f weightPos = midpoint;
+        sf::Vector2f weightPos((p1.x + p2.x)/2, (p1.y + p2.y)/2);
         link_weights.push_back(setTextInfo(weight, 10, sf::Color(255, 0, 0), weightPos));
         nodes_weights[n_l_identifier1] = link_weights.size()-1;
         nodes_weights[n_l_identifier2] = link_weights.size()-1;
