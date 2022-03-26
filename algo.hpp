@@ -15,7 +15,7 @@ public:
     //map<curr node identifier, tuple<distance from node to curr node, from node identifier>>
     typedef std::unordered_map<ll, std::tuple<long long, ll>> weight_map;
     //typedef for node links
-    typedef std::tuple<Node*, size_t, ll, bool> ADJ_NODE;
+    typedef std::tuple<Node*, ll, ll, bool> ADJ_NODE;
     AlgoToRun runAlgo;
 public:
     Algos(){

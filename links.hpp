@@ -23,12 +23,13 @@ enum class LinkStat {Doubly, SinglyTo};
 
 class Links{
 private:
-    typedef unsigned long long ll;
+    typedef long long ll;
+    sf::Font font;
     std::vector<sf::Vertex> all_links;                  
     std::unordered_map<std::string, size_t> nodes_links;        //corresponding node identity to location of its link in all_links
     std::vector<sf::Vertex> arrows;
     std::unordered_map<std::string, size_t> nodes_arrows;               //bool cooresponding to whether nodes have an arrow (for singly linked)
-    std::vector<int> link_weights;
+    std::vector<sf::Text> link_weights;
     std::unordered_map<std::string, size_t> nodes_weights;
 
     //gets the angle between two points in radians (p1 is pointing to p2)
@@ -55,29 +56,54 @@ private:
         return lineangle;
     }
 public:
+    Links(){
+        if (!font.loadFromFile("./Dijkstras/OpenSans-Semibold.ttf")){
+            std::cerr << "LINKS CONSTRUCTOR - Error while loading font - EXITING\n";
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    sf::Text setTextInfo(const ll& weight, const int& charSize, const sf::Color& fillColor, const sf::Vector2f& pos){
+        sf::Text text;
+        text.setFont(font);
+        text.setString(std::to_string(weight));
+        text.setCharacterSize(charSize);
+        text.setOrigin(text.getLocalBounds().width/2., text.getLocalBounds().height/2.);
+        text.setPosition(pos);
+        text.setFillColor(fillColor);  
+
+        return text;
+    }
+
     //creates a link in the vector of vertices
-    void addLink(sf::Vector2f p1, sf::Vector2f p2, sf::Color c1, sf::Color c2){
+    /* void addLink(sf::Vector2f p1, sf::Vector2f p2, sf::Color c1, sf::Color c2){
         all_links.push_back(sf::Vertex(p1, c1));
         all_links.push_back(sf::Vertex(p2, c2));
-    }
+    } */
 
 
     //new addlink, will take link state as arugment
     //point p1 is node that is pointing to point p2 if singly linked
-    void addLink(const sf::Vector2f& p1, const sf::Vector2f& p2, const ll& node1, const ll& node2, const LinkStat& lstate){
-
+    void addLink(const sf::Vector2f& p1, const sf::Vector2f& p2, const ll& node1, const ll& node2, const ll& weight, const LinkStat& lstate){
+        sf::Vector2f midpoint((p1.x + p2.x)/2, (p1.y + p2.y)/2);
         //set link color based on link state
         sf::Color lcolor;
         if (lstate == LinkStat::Doubly) lcolor = sf::Color::Green;
         else                            lcolor = sf::Color::Yellow;
 
-        //add based on color
+        //add link based on color
         all_links.push_back(sf::Vertex(p1, lcolor));
         all_links.push_back(sf::Vertex(p2, lcolor));
 
         //create node identifiers
         std::string n_l_identifier1 = std::to_string(node1) + "_" + std::to_string(node2);
         std::string n_l_identifier2 = std::to_string(node2) + "_" + std::to_string(node1);
+
+        //update link weight values
+        sf::Vector2f weightPos = midpoint;
+        link_weights.push_back(setTextInfo(weight, 10, sf::Color(255, 0, 0), weightPos));
+        nodes_weights[n_l_identifier1] = link_weights.size()-1;
+        nodes_weights[n_l_identifier2] = link_weights.size()-1;
 
         // set node-link identifiers
         // set arrow if singly linked
@@ -88,7 +114,6 @@ public:
 
             //draw the arrow to show singly linked nodes (from -> to)
             if (lstate == LinkStat::SinglyTo){
-                sf::Vector2f midpoint((p1.x + p2.x)/2, (p1.y + p2.y)/2);
                 float lineangle = getLineAngle(p1, p2);
                 std::cout << "lineangle: " << lineangle*(180/M_PI) << std::endl;
 
@@ -106,7 +131,6 @@ public:
                 x2.y = 10;
                 std::cout << "X2 BOTTOM X1: " << getLineAngle(x1, x2)*(180/M_PI) << std::endl;
                 std::cout << "END OF TEST RIGHT ANGLES...............\n"; */
-                
                 
                 sf::Vector2f ap1, ap2;
                 if (lineangle <= M_PI_2){
@@ -158,12 +182,13 @@ public:
             }
         }else{
             std::cout << "LINKS - ERROR - setting identifiers: " << n_l_identifier1 << " or " << n_l_identifier2 << " already exists\n";
+            exit(EXIT_FAILURE);
         }
 
     }
 
     //removes the shared link between two nodes
-    void removeLink(ll node1, ll node2){
+    void removeLink(const ll& node1, const ll& node2){
         std::string n_l_identifier1 = std::to_string(node1) + "_" + std::to_string(node2);
         std::string n_l_identifier2 = std::to_string(node2) + "_" + std::to_string(node1);
 
@@ -178,10 +203,15 @@ public:
             
             //erase link between two nodes
             all_links.erase(all_links.begin()+n_l_idx, all_links.begin()+n_l_idx+2);
-            
             //remove link mapping 
             nodes_links.erase(n_l_identifier1);
             nodes_links.erase(n_l_identifier2);
+
+            //erase edge weight
+            link_weights.erase(link_weights.begin() + nodes_weights[n_l_identifier1]);
+            nodes_weights.erase(n_l_identifier1);
+            nodes_weights.erase(n_l_identifier2);
+
 
             //if node has arrows
             if (nodes_arrows.count(n_l_identifier1) && nodes_arrows.count(n_l_identifier2)){
@@ -247,5 +277,8 @@ public:
     inline void drawLinks(sf::RenderWindow* win){
         win->draw(all_links.data(), all_links.size(), sf::Lines);
         win->draw(arrows.data(), arrows.size(), sf::Lines);
+        for (int i=0; i<link_weights.size(); ++i){
+            win->draw(link_weights[i]);
+        }
     }
 };

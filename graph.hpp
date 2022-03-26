@@ -23,7 +23,7 @@ Graph class:
 
 class Graph{
 private:
-    typedef std::tuple<Node*, size_t, ll, bool> ADJ_NODE;
+    typedef std::tuple<Node*, ll, ll, bool> ADJ_NODE;
     size_t win_width, win_height;                                   //keeps track of the interface window width and height
     size_t num_graphs;                                              //keeps track of the total number of graphs
     ll curr_node_ident;                                            //used to create a new unique node identifier
@@ -511,7 +511,7 @@ public:
  */
 
     //joining nodes n1 (from node), to n2 (to node)
-    void joinNodes(Node* n1, Node* n2, const size_t& link_weight, const LinkStat& lstate){
+    void joinNodes(Node* n1, Node* n2, const ll& link_weight, const LinkStat& lstate){
         ll n1Ident = n1->getNodeIdent();
         ll n2Ident = n2->getNodeIdent();
         size_t loc1 = node_locs[n1Ident];
@@ -555,7 +555,7 @@ public:
 
             n1->addLinktoNode(n2, link_weight, link_ident, n1ConnectionStat);
             n2->addLinktoNode(n1, link_weight, link_ident, n2ConnectionStat);
-            GUIlinks.addLink(n1->getNodePos(), n2->getNodePos(), n1Ident, n2Ident, lstate);
+            GUIlinks.addLink(n1->getNodePos(), n2->getNodePos(), n1Ident, n2Ident, link_weight, lstate);
             std::cout << "added node link\n";
         }else{
             //determine connection from n1 to n2
@@ -581,7 +581,7 @@ public:
                 n2->changeLinkType(n2_l_idx, n2ConnectionStat);
 
                 GUIlinks.removeLink(n1Ident, n2Ident);
-                GUIlinks.addLink(n1->getNodePos(), n2->getNodePos(), n1Ident, n2Ident, lstate);
+                GUIlinks.addLink(n1->getNodePos(), n2->getNodePos(), n1Ident, n2Ident, link_weight, lstate);
 
                 /* 
                 //DEBUGGING - CAN REMOVE LATER

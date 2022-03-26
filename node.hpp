@@ -29,7 +29,7 @@ Node class:
 */
 class Node{
 public:
-    typedef std::tuple<Node*, size_t, ll, bool> ADJ_NODE;
+    typedef std::tuple<Node*, ll, ll, bool> ADJ_NODE;
     typedef std::vector<ADJ_NODE> NODE_VEC;
 private:
     ll ident;                              //Nodes identifying number
@@ -48,7 +48,7 @@ public:
         GUInode.setOutlineColor(sf::Color::White);
         GUInode.setOutlineThickness(2.f);
 
-        //set inofrmation about node text
+        //set information about node text
         textId.setFont(font);
         textId.setString(std::to_string(ident));
         textId.setCharacterSize(18);
