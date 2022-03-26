@@ -23,14 +23,14 @@ Graph class:
 
 class Graph{
 private:
-    typedef std::tuple<Node*, size_t, ull, bool> ADJ_NODE;
+    typedef std::tuple<Node*, size_t, ll, bool> ADJ_NODE;
     size_t win_width, win_height;                                   //keeps track of the interface window width and height
     size_t num_graphs;                                              //keeps track of the total number of graphs
-    ull curr_node_ident;                                            //used to create a new unique node identifier
-    ull curr_link_ident;                                            //used to create a new unique link identifier
+    ll curr_node_ident;                                            //used to create a new unique node identifier
+    ll curr_link_ident;                                            //used to create a new unique link identifier
     std::vector<Node*> all_graphs;                                  //vector containing all graphs
     std::vector<size_t> open_locs;                                  //Keeps track of indices in all_graphs that are null
-    std::unordered_map<ull, size_t> node_locs;                      //<Node identifier, all_graphs index> Keeps track of a nodes location in all_graphs                  
+    std::unordered_map<ll, size_t> node_locs;                      //<Node identifier, all_graphs index> Keeps track of a nodes location in all_graphs                  
     Node** node_ilocs;                                              //Keeps track of the location of each node in the window interface                     
     Links GUIlinks;                                                 //Lines used to represent links between nodes on the interface
     //NOT YET IMPLEMENTED: Keeps track of open cells in all_graphs (might implement later - to deal with all_graphs space usage)
@@ -69,7 +69,7 @@ public:
 
     //helper of function drawAllNodesinGraph
     //Runs DFS on graph to draw each node in the given graph
-    void DFSGraphDraw(Node* curr, std::unordered_set<ull>& visited, sf::RenderWindow* win){
+    void DFSGraphDraw(Node* curr, std::unordered_set<ll>& visited, sf::RenderWindow* win){
         visited.insert(curr->getNodeIdent());
         curr->drawNode(win);
 
@@ -87,14 +87,14 @@ public:
     void drawAllNodesinGraph(size_t graph_idx, sf::RenderWindow* win){
         Node* node_head = all_graphs[graph_idx];
         if (node_head){
-            std::unordered_set<ull> visited;
+            std::unordered_set<ll> visited;
             DFSGraphDraw(node_head, visited, win);
         }
     }
 
     // record nodes at a certain graph position to IMGUI graph table
-    void recordAllNodes(Node* curr, std::unordered_set<ull>& visited, std::string& allnodes){
-        ull currNode = curr->getNodeIdent();
+    void recordAllNodes(Node* curr, std::unordered_set<ll>& visited, std::string& allnodes){
+        ll currNode = curr->getNodeIdent();
         visited.insert(currNode);
         allnodes += std::to_string(currNode);
 
@@ -112,7 +112,7 @@ public:
     // render IMGUI table to display nodes corresponding to each graph
     void drawGraphViewer(){
         for (size_t i=0; i < all_graphs.size(); ++i){
-            std::unordered_set<ull> visited;
+            std::unordered_set<ll> visited;
             std::string allnodes = "\t";
 
             ImGui::Text("Graph: %d", i);
@@ -257,7 +257,7 @@ public:
     }
     
     //checks if a node exists and returns the position of a node in all_graphs 
-    inline size_t getNodeGraphsPos(ull ident){
+    inline size_t getNodeGraphsPos(ll ident){
         if (node_locs.count(ident))
             return node_locs[ident];
         else
@@ -265,12 +265,12 @@ public:
     }
 
     //returns a valid Node identifier and updates next available identifier
-    inline ull getNewNodeIdent(){
+    inline ll getNewNodeIdent(){
         return curr_node_ident++;
     }
 
     //returns a valid Link identifier and updates next available identifier
-    inline ull getNewLinkIdent(){
+    inline ll getNewLinkIdent(){
         return curr_link_ident++;
     }
 
@@ -290,7 +290,7 @@ public:
     }
 
     //Runs a depth first search on the graph to find node with the given identifier (Returns NULL if node was not in the graph)
-    Node* graphDFS(Node* curr, ull ident, std::unordered_set<ull>& visited){
+    Node* graphDFS(Node* curr, ll ident, std::unordered_set<ll>& visited){
         std::cout << "Curr node: " << curr->getNodeIdent() << '\n';
         if (curr->getNodeIdent() == ident){
             std::cout << "DFS found: " << curr->getNodeIdent() << " == " << ident << '\n';
@@ -323,15 +323,15 @@ public:
 
     //finds a given node in one of the graphs and the node identifier 
     //should only take ident as parameter
-    Node* findNode(size_t graph_index, ull ident){
-        std::unordered_set<ull> visited;
+    Node* findNode(size_t graph_index, ll ident){
+        std::unordered_set<ll> visited;
         //write a map that determines which index in all_graphs the indentifier belongs to
         return graphDFS(all_graphs[graph_index], ident, visited);
     }
 
     //runs DFS to find node with given identifier
     //REVISED: you don't have to tell which all_graphs index to look into
-    Node* findNode(ull ident){
+    Node* findNode(ll ident){
         std::cout << "\nFINDING NODE" << ident << "\n";
         if (!node_locs.count(ident)){
             std::cout << "\tERROR in graph.REVISEDfindNode - Node location not recorded in map - EXITING\n";
@@ -348,16 +348,16 @@ public:
             std::cout << "\tNode found in location: " << node_locs[ident] << "\n";
         }
 
-        std::unordered_set<ull> visited;
+        std::unordered_set<ll> visited;
         Node* ret = graphDFS(findNode, ident, visited);
-        if (ret == NULL) std::cout << "\tDFS returned null\n";
+        if (ret == NULL) std::cout << "\tDFS returned nll\n";
         return ret;
     }
 
 
     //creates a new individual node and implants it as its own graph at position pos
     void createNewNode(sf::Vector2i pos, sf::Font& font){
-        ull ident = getNewNodeIdent();
+        ll ident = getNewNodeIdent();
         Node* nn = new Node(ident, sf::Vector2f(pos), font);
 
         // determine where to place the new node in all_graphs
@@ -379,7 +379,7 @@ public:
         if (node_ilocs[iloc] == NULL){
             node_ilocs[iloc] = nn;
         }else{
-            std::cout << "\tCREATE NODE - adding to iloc position: " << iloc << " is not null - EXITING\n";
+            std::cout << "\tCREATE NODE - adding to iloc position: " << iloc << " is not nll - EXITING\n";
             exit(EXIT_FAILURE);
         }
 
@@ -411,7 +411,7 @@ public:
             //note if you connect any node from an index in all_graphs with another one, it becomes one graph so you can get rid of the entire pointer on one side
             //have to change node locs of the graph you are moving though
     //right now just going to give it node identifier parameter
-    /* void joinNodes(ull ident1, ull ident2, size_t link_weight, const LinkStat& lstate){
+    /* void joinNodes(ll ident1, ll ident2, size_t link_weight, const LinkStat& lstate){
         if (ident1 == ident2){
             std::cout << "ERROR in graph.joinNodes: cannot join node with itself EXITING\n";
             exit(EXIT_FAILURE);
@@ -434,7 +434,7 @@ public:
 
             //update node 2's node_loc to be the same as node 1 if it isn't already
             if (loc1 != loc2){
-                std::unordered_set<ull> visited;
+                std::unordered_set<ll> visited;
                 //update node_locs map for the graph thats getting moved
                 moveGraphLoc(all_graphs[loc2], visited, loc1);
                 num_graphs--;
@@ -453,7 +453,7 @@ public:
 
             //connect the two nodes together if not already connected
             if (!alreadyConnected){
-                ull link_ident = getNewLinkIdent();
+                ll link_ident = getNewLinkIdent();
                 n1->addLinktoNode(n2, link_weight, link_ident);
                 n2->addLinktoNode(n1, link_weight, link_ident);
                 //addNewLink(n1->getNodePos(), n2->getNodePos(), sf::Color::Green);
@@ -479,7 +479,7 @@ public:
 
         //update node 2's node_loc to be the same as node 1 if it isn't already
         if (loc1 != loc2){
-            std::unordered_set<ull> visited;
+            std::unordered_set<ll> visited;
             //update node_locs map for the graph thats getting moved
             moveGraphLoc(all_graphs[loc2], visited, loc1);
             all_graphs[loc2] = NULL;
@@ -500,7 +500,7 @@ public:
 
         //connect the two nodes together if not already connected
         if (!alreadyConnected){
-            ull link_ident = getNewLinkIdent();
+            ll link_ident = getNewLinkIdent();
             n1->addLinktoNode(n2, link_weight, link_ident);
             n2->addLinktoNode(n1, link_weight, link_ident);
             //addNewLink(n1->getNodePos(), n2->getNodePos(), sf::Color::Green);
@@ -512,14 +512,14 @@ public:
 
     //joining nodes n1 (from node), to n2 (to node)
     void joinNodes(Node* n1, Node* n2, const size_t& link_weight, const LinkStat& lstate){
-        ull n1Ident = n1->getNodeIdent();
-        ull n2Ident = n2->getNodeIdent();
+        ll n1Ident = n1->getNodeIdent();
+        ll n2Ident = n2->getNodeIdent();
         size_t loc1 = node_locs[n1Ident];
         size_t loc2 = node_locs[n2Ident];
 
         //update node 2's node_loc to be the same as node 1 if it isn't already
         if (loc1 != loc2){
-            std::unordered_set<ull> visited;
+            std::unordered_set<ll> visited;
             //update node_locs map for the graph thats getting moved
             moveGraphLoc(all_graphs[loc2], visited, loc1);
             all_graphs[loc2] = NULL;
@@ -551,7 +551,7 @@ public:
 
         //connect the two nodes together if not already connected
         if (!alreadyConnected){
-            ull link_ident = getNewLinkIdent();
+            ll link_ident = getNewLinkIdent();
 
             n1->addLinktoNode(n2, link_weight, link_ident, n1ConnectionStat);
             n2->addLinktoNode(n1, link_weight, link_ident, n2ConnectionStat);
@@ -627,7 +627,7 @@ public:
         n2->remLinktoNode(n1->getNodeIdent());
         
         //determine if a node needs to be moved to a new graph
-        std::unordered_set<ull> visited;
+        std::unordered_set<ll> visited;
         Node* inGraph = graphDFS(n1, n2->getNodeIdent(), visited);
         visited.clear();
 
@@ -677,9 +677,9 @@ public:
 */
 
     // runs DFS move the graph so all nodes within that graph are found at new_loc
-    void moveGraphLoc(Node* curr, std::unordered_set<ull>& visited, size_t new_loc){
+    void moveGraphLoc(Node* curr, std::unordered_set<ll>& visited, size_t new_loc){
         // change where to find node via node_locs
-        ull curr_ident = curr->getNodeIdent();
+        ll curr_ident = curr->getNodeIdent();
         visited.emplace(curr_ident);
         node_locs[curr_ident] = new_loc;
         std::cout << "\tnode: " << curr_ident << " moved to: " << new_loc << '\n';
@@ -697,16 +697,16 @@ public:
     void deleteNode(Node* NTD){
         std::cout << "\nDELETING NODE " << NTD->getNodeIdent() << "\n";
         sf::Vector2i npos= sf::Vector2i(NTD->getNodePos());
-        ull NTDident = NTD->getNodeIdent();
+        ll NTDident = NTD->getNodeIdent();
         
         std::vector<ADJ_NODE> links = NTD->getNodeLinks();
-        std::unordered_set<ull> visited;
+        std::unordered_set<ll> visited;
         visited.emplace(NTDident);
 
         // move each child node to a new graph positon & remove link from child to NTD
         for (size_t i=0; i < links.size(); ++i){
             Node* child = std::get<0>(links[i]);
-            ull child_ident = child->getNodeIdent();
+            ll child_ident = child->getNodeIdent();
 
             if (!visited.count(child_ident)){
                 size_t new_loc = all_graphs.size();
@@ -816,7 +816,7 @@ public:
     }
 
     //updates the link connection weight between two nodes by identifier to a given link weight
-    void updateNodeLink(ull ident1, ull ident2, size_t lw){
+    void updateNodeLink(ll ident1, ll ident2, size_t lw){
         std::cout << "UpdateNodeLin:\n\tSearching n1\n";
         Node* n1 = findNode(ident1);
         std::cout << "\tSearching n2\n";
@@ -875,7 +875,7 @@ public:
     }
 
     //debug function to see the link weight between two nodes
-    void displayLinkWeight(ull ident1, ull ident2){
+    void displayLinkWeight(ll ident1, ll ident2){
         Node* n1 = findNode(ident1);
         Node* n2 = findNode(ident2);
 

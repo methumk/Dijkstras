@@ -16,8 +16,8 @@ structure.hpp
 
 #include "links.hpp"
 
-//Define ull for identifiers
-typedef unsigned long long ull;
+//Define ll for identifiers
+typedef long long ll;
 #define NODE_RADIUS 30
 
 
@@ -29,17 +29,17 @@ Node class:
 */
 class Node{
 public:
-    typedef std::tuple<Node*, size_t, ull, bool> ADJ_NODE;
+    typedef std::tuple<Node*, size_t, ll, bool> ADJ_NODE;
     typedef std::vector<ADJ_NODE> NODE_VEC;
 private:
-    ull ident;                              //Nodes identifying number
+    ll ident;                              //Nodes identifying number
     std::vector<ADJ_NODE> links;            //The nodes connections: vector of tuples<node, link weight, node identifier>
     sf::CircleShape GUInode;                //Circle used to represent node on the interface
     sf::Text textId;                            //Interface text used to identify each node
 public:
     Node(){}
-    Node(ull i): ident(i){}
-    Node(ull i, sf::Vector2f pos, sf::Font& font) : ident(i){
+    Node(ll i): ident(i){}
+    Node(ll i, sf::Vector2f pos, sf::Font& font) : ident(i){
         //set information about gui node
         GUInode.setRadius(NODE_RADIUS);
         GUInode.setOrigin(NODE_RADIUS, NODE_RADIUS);
@@ -101,7 +101,7 @@ public:
     }
 
     //add a new linked up node manually
-    inline void addLinktoNode(Node* addNode, size_t lw, ull li, bool connection){
+    inline void addLinktoNode(Node* addNode, size_t lw, ll li, bool connection){
         links.push_back(std::make_tuple(addNode, lw, li, connection));
     }
 
@@ -121,7 +121,7 @@ public:
     }
 
     //changes the link weight of an existing node link
-    void changeLinkWeight(const size_t idx, ull lw){
+    void changeLinkWeight(const size_t idx, ll lw){
         if (idx >= 0 && idx < links.size()){
             std::get<1>(links[idx]) = lw;
         }else{
@@ -147,7 +147,7 @@ public:
     }
 
     //returns current nodes identifier
-    inline ull getNodeIdent(){
+    inline ll getNodeIdent(){
         return ident;
     }
 
@@ -163,7 +163,7 @@ public:
 
     //have to do dfs on graph to find correct identifier
     //retrieves node and link information at the given node identifier
-    inline ADJ_NODE getNodeInfo(ull i){
+    inline ADJ_NODE getNodeInfo(ll i){
         return links[i];
     }
 
@@ -174,12 +174,12 @@ public:
 
     //have to do dfs on graph to find correct identifier
     //retrieves Node for the node with the given node identifier
-    inline Node* getAdjNode(ull ident){
+    inline Node* getAdjNode(ll ident){
         return NULL;
     }
 
     //removes current node's link to a given node from its links vector
-    void remLinktoNode(ull ident){
+    void remLinktoNode(ll ident){
         for (size_t i=0; i < links.size(); ++i){
             Node* inspect = std::get<0>(links[i]);
             if (inspect->getNodeIdent() == ident){

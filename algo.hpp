@@ -13,9 +13,9 @@ enum AlgoToRun {DFS, BFS, Dijkstra, NoAlgo};
 class Algos{
 public:
     //map<curr node identifier, tuple<distance from node to curr node, from node identifier>>
-    typedef std::unordered_map<ull, std::tuple<long long, ull>> weight_map;
+    typedef std::unordered_map<ll, std::tuple<long long, ll>> weight_map;
     //typedef for node links
-    typedef std::tuple<Node*, size_t, ull, bool> ADJ_NODE;
+    typedef std::tuple<Node*, size_t, ll, bool> ADJ_NODE;
     AlgoToRun runAlgo;
 public:
     Algos(){
@@ -81,7 +81,7 @@ public:
 
         /* Node* start = NULL, *end = NULL;
         if (!checkPossibleID(inputNode, 256)){
-            ull startIdent = std::stoull(inputNode);
+            ll startIdent = std::stoull(inputNode);
             std::cout << "Algo DFS - start ident: " << startIdent << std::endl;
             start = graphMan->findNode(startIdent);
         } */

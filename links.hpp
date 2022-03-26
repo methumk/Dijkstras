@@ -23,11 +23,13 @@ enum class LinkStat {Doubly, SinglyTo};
 
 class Links{
 private:
-    typedef unsigned long long ull;
+    typedef unsigned long long ll;
     std::vector<sf::Vertex> all_links;                  
     std::unordered_map<std::string, size_t> nodes_links;        //corresponding node identity to location of its link in all_links
     std::vector<sf::Vertex> arrows;
     std::unordered_map<std::string, size_t> nodes_arrows;               //bool cooresponding to whether nodes have an arrow (for singly linked)
+    std::vector<int> link_weights;
+    std::unordered_map<std::string, size_t> nodes_weights;
 
     //gets the angle between two points in radians (p1 is pointing to p2)
     //Angle ranges from 0 to 180 starting from second quad
@@ -62,7 +64,7 @@ public:
 
     //new addlink, will take link state as arugment
     //point p1 is node that is pointing to point p2 if singly linked
-    void addLink(const sf::Vector2f& p1, const sf::Vector2f& p2, const ull& node1, const ull& node2, const LinkStat& lstate){
+    void addLink(const sf::Vector2f& p1, const sf::Vector2f& p2, const ll& node1, const ll& node2, const LinkStat& lstate){
 
         //set link color based on link state
         sf::Color lcolor;
@@ -161,7 +163,7 @@ public:
     }
 
     //removes the shared link between two nodes
-    void removeLink(ull node1, ull node2){
+    void removeLink(ll node1, ll node2){
         std::string n_l_identifier1 = std::to_string(node1) + "_" + std::to_string(node2);
         std::string n_l_identifier2 = std::to_string(node2) + "_" + std::to_string(node1);
 
@@ -204,7 +206,7 @@ public:
     }
 
     //sets the mapping between two nodes and its link
-    /* void setLinkMap(ull node1, ull node2, size_t l_idx){
+    /* void setLinkMap(ll node1, ll node2, size_t l_idx){
         std::string n_l_identifier1 = std::to_string(node1) + "_" + std::to_string(node2);
         std::string n_l_identifier2 = std::to_string(node2) + "_" + std::to_string(node1);
 
@@ -223,7 +225,7 @@ public:
     } */
 
     //removes mapping of link between two nodes
-    /* void removeLinkMap(ull node1, ull node2){
+    /* void removeLinkMap(ll node1, ll node2){
         std::string n_l_identifier1 = std::to_string(node1) + "_" + std::to_string(node2);
         std::string n_l_identifier2 = std::to_string(node2) + "_" + std::to_string(node1);
 
