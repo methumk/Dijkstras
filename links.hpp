@@ -57,6 +57,11 @@ private:
         //return lineangle*(M_PI/180);
         return lineangle;
     }
+
+    //Rotates a point aroung an origin point 90 degrees clock wise
+    inline sf::Vector2f cwOrthRotation(const sf::Vector2f& point_to_rotate, const sf::Vector2f& origin){
+        return sf::Vector2f((point_to_rotate.y - origin.y) + origin.x,-1*(point_to_rotate.x - origin.x) + origin.y);
+    } 
 public:
     Links(){
         if (!font.loadFromFile("./Dijkstras/OpenSans-Semibold.ttf")){
@@ -102,10 +107,14 @@ public:
         std::string n_l_identifier2 = std::to_string(node2) + "_" + std::to_string(node1);
 
         //update link weight values
-        sf::Vector2f weightPos((p1.x + p2.x)/2, (p1.y + p2.y)/2);
-        link_weights.push_back(setTextInfo(weight, 10, sf::Color(255, 0, 0), weightPos));
-        nodes_weights[n_l_identifier1] = link_weights.size()-1;
-        nodes_weights[n_l_identifier2] = link_weights.size()-1;
+        // float slope = (p2.y-p1.y)/(p2.x-p1.x);
+        // float intercept = p2.y - slope*(p2.x);
+        sf::Vector2f weightPos(p1.x + ((p2.x - p1.x)/2.5), p1.y + ((p2.y - p1.y)/2.5));
+        //sf::Vector2f weightPos(p1.x+ARROW_LEN, slope*(p1.x+ARROW_LEN) + intercept);
+        link_weights.push_back(setTextInfo(weight, 10, sf::Color(255, 0, 0), cwOrthRotation(weightPos, midpoint)));
+        size_t w_idx = link_weights.size()-1;
+        nodes_weights[n_l_identifier1] = w_idx;
+        nodes_weights[n_l_identifier2] = w_idx;
 
         // set node-link identifiers
         // set arrow if singly linked
@@ -210,7 +219,15 @@ public:
             nodes_links.erase(n_l_identifier2);
 
             //erase edge weight
-            link_weights.erase(link_weights.begin() + nodes_weights[n_l_identifier1]);
+            size_t w_idx = nodes_weights[n_l_identifier1];
+            for (auto it = nodes_weights.begin(); it != nodes_weights.end(); ++it){
+                if (it->second > w_idx)
+                    it->second -= 1;
+            }
+
+            //remove gui edge weight
+            link_weights.erase(link_weights.begin() + w_idx);
+            //remove edge weight mapping
             nodes_weights.erase(n_l_identifier1);
             nodes_weights.erase(n_l_identifier2);
 
