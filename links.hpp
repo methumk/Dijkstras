@@ -17,6 +17,7 @@ links class:
 //Define the linkstatus possibilities between two nodes
 enum class LinkStat {Doubly, SinglyTo};
 #define ARROW_LEN 10
+#define EDGE_WEIGHT_ORTH_DIST (ARROW_LEN+5)
 #define DOUBLY_COLOR sf::Color::Green
 #define SINGLY_COLOR sf::Color::Yellow
 // #ifndef PI_4
@@ -109,9 +110,10 @@ public:
         //update link weight values
         // float slope = (p2.y-p1.y)/(p2.x-p1.x);
         // float intercept = p2.y - slope*(p2.x);
-        sf::Vector2f weightPos(p1.x + ((p2.x - p1.x)/2.5), p1.y + ((p2.y - p1.y)/2.5));
+        // sf::Vector2f weightPos(p1.x + ((p2.x - p1.x)/2.5), p1.y + ((p2.y - p1.y)/2.5));
+        sf::Vector2f wp(midpoint.x+EDGE_WEIGHT_ORTH_DIST*cosf(getLineAngle(p1, p2)), midpoint.y+EDGE_WEIGHT_ORTH_DIST*sinf(getLineAngle(p1, p2)));
         //sf::Vector2f weightPos(p1.x+ARROW_LEN, slope*(p1.x+ARROW_LEN) + intercept);
-        link_weights.push_back(setTextInfo(weight, 10, sf::Color(255, 0, 0), cwOrthRotation(weightPos, midpoint)));
+        link_weights.push_back(setTextInfo(weight, 10, sf::Color(255, 0, 0), cwOrthRotation(wp, midpoint)));
         size_t w_idx = link_weights.size()-1;
         nodes_weights[n_l_identifier1] = w_idx;
         nodes_weights[n_l_identifier2] = w_idx;
