@@ -121,7 +121,7 @@ class Gui{
         //attempts to create a new node displayed on the interface
         void addNode(const sf::RenderWindow* win){
             //adds node if new node doesn't overlap with existing nodes
-            if (!mouseOverNode(win, NODE_RADIUS*2)){
+            if (!mouseOverNode(win, NODE_RADIUS*4)){
                 sf::Vector2i pos = sf::Mouse::getPosition(*win);
                 std::cout << "2 - node created at position: " << win_width*pos.y + pos.x << " x: " << pos.x << " y: " << pos.y << '\n';
                 graphMan->createNewNode(pos, font);
