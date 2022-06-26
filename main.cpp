@@ -136,11 +136,11 @@ int main(){
                         }
                     }else if (sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
                         if (state == SimulState::RemoveNodeMode){
-                            std::cout << "\n\nMode Activated: Removing Links\n";
-                            state = SimulState::RemoveLinkMode;
-                        }else{
                             std::cout << "\n\nMode Activated: Removing Nodes\n";
                             state = SimulState::RemoveNodeMode; 
+                        }else{
+                            std::cout << "\n\nMode Activated: Removing Links\n";
+                            state = SimulState::RemoveLinkMode;
                         }
                     }else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Num1)){
                         if (link_state != LinkStat::SinglyTo) 
