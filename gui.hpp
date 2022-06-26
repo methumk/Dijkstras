@@ -13,7 +13,7 @@ class Gui{
     private:
         Graph* graphMan;
         Algos algoMan;
-        sf::Font font;
+        sf::Font nodeFont, simulStateFont;
         size_t win_width, win_height;
         std::vector<sf::Vertex> shadowLink;
         std::vector<sf::Vertex> shadowRemoveLink;
@@ -23,7 +23,7 @@ class Gui{
 
         Gui(const int& w_width, const int& w_height){
             //try to load in font needed to display text
-            if (!font.loadFromFile("./Dijkstras/OpenSans-Semibold.ttf")){
+            if (!nodeFont.loadFromFile("./Dijkstras/OpenSans-Semibold.ttf")){
                 std::cerr << "GUI CONSTRUCTOR - Error while loading font - EXITING\n";
                 exit(EXIT_FAILURE);
             }
@@ -124,7 +124,7 @@ class Gui{
             if (!mouseOverNode(win, NODE_RADIUS*4)){
                 sf::Vector2i pos = sf::Mouse::getPosition(*win);
                 std::cout << "2 - node created at position: " << win_width*pos.y + pos.x << " x: " << pos.x << " y: " << pos.y << '\n';
-                graphMan->createNewNode(pos, font);
+                graphMan->createNewNode(pos, nodeFont);
             }
         }
 
@@ -256,6 +256,10 @@ class Gui{
             ImGui::Begin("Run Algorithms");
             algoMan.displayAlgosMenu();
             ImGui::End();
+        }
+
+        void drawIMSimulStateIndicator(){
+
         }
 
         void runAlgoFromMenu(){
