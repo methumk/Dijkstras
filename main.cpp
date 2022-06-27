@@ -35,6 +35,7 @@ void mousePos(sf::RenderWindow* window){
 
 //Created seperate enums for removing nodes and links (don't know if this will be the case in the future)
 enum class SimulState {AddNodeMode, AddLinkMode, RemoveNodeMode, RemoveLinkMode};
+const std::string simulStateDisplay[4] = {"Adding Nodes", "Adding Links", "Removing Nodes", "Removing Links"};
 
 int main(){
 #if SIMUL
@@ -45,7 +46,6 @@ int main(){
     ImGui::SFML::Init(window);
     sf::Clock deltaClock;
 
-    Gui game(win_width, win_height);
     // sf::Thread t1(std::bind(&renderThread, &window, &game));
     // t1.launch();
     // sf::Thread mp(&mousePos, &window);
@@ -56,6 +56,7 @@ int main(){
     static AlgoToRun runningAlgo = NoAlgo;
     static LinkStat link_state = LinkStat::Doubly;
     sf::Vector2i left_mpos, curr_mpos;
+    Gui game(win_width, win_height, simulStateDisplay[(int) state]);
     Node *right_clicked_on_node = NULL, *left_clicked_on_node = NULL;
 
     /* 
@@ -136,11 +137,11 @@ int main(){
                         }
                     }else if (sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
                         if (state == SimulState::RemoveNodeMode){
-                            std::cout << "\n\nMode Activated: Removing Nodes\n";
-                            state = SimulState::RemoveNodeMode; 
-                        }else{
                             std::cout << "\n\nMode Activated: Removing Links\n";
                             state = SimulState::RemoveLinkMode;
+                        }else{
+                            std::cout << "\n\nMode Activated: Removing Nodes\n";
+                            state = SimulState::RemoveNodeMode; 
                         }
                     }else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Num1)){
                         if (link_state != LinkStat::SinglyTo) 
@@ -177,6 +178,7 @@ int main(){
 
         //render SFML objects
         window.clear();
+        game.drawSimulStateIndicator(&window, simulStateDisplay[(int) state]);
         game.renderAllGraphs(&window);
         ImGui::SFML::Render(window);
         window.display();

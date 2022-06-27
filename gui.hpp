@@ -8,12 +8,15 @@ gui.hpp
 #include "algo.hpp"
 
 #define REM_SHADOW_COLOR sf::Color::Red
+#define SIMUL_STATE_DISPLAY_COLOR sf::Color(255, 156, 18)
 
 class Gui{
     private:
         Graph* graphMan;
         Algos algoMan;
-        sf::Font nodeFont, simulStateFont;
+        sf::Font nodeFont;
+        sf::Font simulStateFont;
+        sf::Text simulStateDisplay;
         size_t win_width, win_height;
         std::vector<sf::Vertex> shadowLink;
         std::vector<sf::Vertex> shadowRemoveLink;
@@ -21,16 +24,28 @@ class Gui{
 
     public:
 
-        Gui(const int& w_width, const int& w_height){
+        Gui(const int& w_width, const int& w_height, const std::string simulStateText){
             //try to load in font needed to display text
-            if (!nodeFont.loadFromFile("./Dijkstras/OpenSans-Semibold.ttf")){
-                std::cerr << "GUI CONSTRUCTOR - Error while loading font - EXITING\n";
+            if (!nodeFont.loadFromFile("./Dijkstras/open-sans/OpenSans-Semibold.ttf")){
+                std::cerr << "GUI CONSTRUCTOR - Error while loading node font - EXITING\n";
                 exit(EXIT_FAILURE);
             }
 
             win_width = w_width;
             win_height = w_height;
             graphMan = new Graph(win_width, win_height);
+
+            if (!simulStateFont.loadFromFile("./Dijkstras/Mollen/Mollen-Bold.otf")){
+                std::cerr << "GUI CONSTRUCTOR - Error while loading simul state font - EXITING\n";
+                exit(EXIT_FAILURE);
+            }
+            simulStateDisplay.setFont(simulStateFont);
+            simulStateDisplay.setString(simulStateText);
+            simulStateDisplay.setCharacterSize(20);
+            // simulStateDisplay.getLocalBounds().width/2., simulStateDisplay.getLocalBounds().height/2.
+            simulStateDisplay.setOrigin(simulStateDisplay.getLocalBounds().width, 0);
+            simulStateDisplay.setPosition(sf::Vector2f(win_width, 10));
+            simulStateDisplay.setFillColor(SIMUL_STATE_DISPLAY_COLOR);
         }
 
         //returns the euclidean distance between two integer points
@@ -258,8 +273,11 @@ class Gui{
             ImGui::End();
         }
 
-        void drawIMSimulStateIndicator(){
-
+        void drawSimulStateIndicator(sf::RenderWindow* win, const std::string stateText){
+            simulStateDisplay.setString(stateText);
+            simulStateDisplay.setOrigin(simulStateDisplay.getLocalBounds().width, 0);
+            simulStateDisplay.setPosition(sf::Vector2f(win_width-10, 10));
+            win->draw(simulStateDisplay);
         }
 
         void runAlgoFromMenu(){

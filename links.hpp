@@ -65,7 +65,7 @@ class Links{
         } 
     public:
         Links(){
-            if (!font.loadFromFile("./Dijkstras/OpenSans-Semibold.ttf")){
+            if (!font.loadFromFile("./Dijkstras/open-sans/OpenSans-Semibold.ttf")){
                 std::cerr << "LINKS CONSTRUCTOR - Error while loading font - EXITING\n";
                 exit(EXIT_FAILURE);
             }
