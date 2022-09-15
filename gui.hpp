@@ -6,6 +6,7 @@ gui.hpp
 #pragma once
 #include <SFML/Graphics.hpp>
 #include "algo.hpp"
+#include <string>
 
 #define REM_SHADOW_COLOR sf::Color::Red
 #define SIMUL_STATE_DISPLAY_COLOR sf::Color(255, 156, 18)
@@ -20,7 +21,23 @@ class Gui{
         size_t win_width, win_height;
         std::vector<sf::Vertex> shadowLink;
         std::vector<sf::Vertex> shadowRemoveLink;
+        std::vector<sf::Vertex> tempLink;
+
         //sf::Vertex* shadowLink[2];
+        
+        // NOTE: currently just supporting positive weights
+        bool isNumber(const std::string& str)
+        {
+            for (int i=0; i < str.size(); ++i) {
+                // if (i==0 && str[i] == '-'){
+                //     continue;
+                // }
+                if (std::isdigit(str[i]) == 0){
+                    return false;
+                }
+            }
+            return true;
+        }
 
     public:
 
@@ -152,6 +169,7 @@ class Gui{
             }
         }
 
+        //unlink two linked nodes
         void removeLink(Node* n1, Node* n2){
             //check that nodes exist and aren't the same
             if (n2 != NULL && n1 != NULL && n1 != n2){
@@ -161,15 +179,19 @@ class Gui{
         }
 
         //attempt to link two not Null and different nodes with each other
-        void linkNodes(Node* n1, Node* n2, const LinkStat& lstate){
+        void linkNodes(Node* n1, Node* n2, const LinkStat& lstate, bool& textInputting){
             //check that nodes being joined aren't the same
-            if (n2 != NULL && n1 != NULL && n1 != n2){
+            if (n2 != NULL && n1 != NULL && n1 != n2 && !textInputting){
                 //have gui ask for node link weight
-                std::cout << "4- Linking nodes\n";
-                ll link_weight = -1;
 
                 //std::string title = "Set link weight for nodes" + std::to_string(n1->getNodeIdent()) + " and " + std::to_string(n2->getNodeIdent());
                 graphMan->joinNodes(n1, n2, 20, lstate);
+                textInputting = true;
+
+                std::cout << "TEXT INPUTTING TRUE!!!\n";
+                // sf::Thread linkNodesThread(std::bind(&renderLinkWeightBox, nodeInputting));
+                // linkNodesThread.launch();
+                // renderLinkWeightBox(nodeInputting);
             }
         }
 
@@ -233,6 +255,21 @@ class Gui{
             }
         }
 
+        // Creates a temporary link between two nodes without a weight (used before getting user input for link weight)
+        void setTempLink(Node* n1, Node* n2, const LinkStat& lstate){
+            sf::Color lcolor;
+            if (lstate == LinkStat::Doubly) lcolor = DOUBLY_COLOR;
+            else                            lcolor = SINGLY_COLOR;
+
+            tempLink.push_back(sf::Vertex(n1->getNodePos(), lcolor));
+            tempLink.push_back(sf::Vertex(n2->getNodePos(), lcolor));
+        }
+
+        // resets the shadow link
+        inline void resetTempLink(){
+            tempLink.clear();
+        }
+
         inline void resetShadowRemoveLink(){
             shadowRemoveLink.clear();
         }
@@ -251,21 +288,74 @@ class Gui{
             ImGui::End();
         }
 
-        //renders all elements of all the graphs
-        void renderAllGraphs(sf::RenderWindow* win){
+
+        void renderLinks(sf::RenderWindow* win){
             if (shadowLink.size() == 2){
                 win->draw(shadowLink.data(), shadowLink.size(), sf::Lines);
             }
             if (shadowRemoveLink.size() == 2){
                 win->draw(shadowRemoveLink.data(), shadowRemoveLink.size(), sf::Lines);
             }
+            if (tempLink.size() == 2){
+                win->draw(tempLink.data(), tempLink.size(), sf::Lines);
+            }
+        }
 
+        //renders all elements of all the graphs
+        void renderGraphs(sf::RenderWindow* win){
             graphMan->drawAllLinks(win);
             size_t ags = graphMan->getAllGraphSize();
             for (size_t i=0; i < ags; ++i){
                 graphMan->drawAllNodesinGraph(i, win);
             }
         }
+
+        void renderLinkWeightBox(Node* n1, Node* n2, const LinkStat& lstate, bool& textInputting, bool& checkLinking){
+            if (checkLinking){
+                std::cout << "TEXTINPUTTING: " << textInputting << "\n";
+                if (n1) std::cout << "N1 ID: " << n1->getNodeIdent() << "'\t";
+                else std::cout << "N1 NULL;\t";
+                if (n2) std::cout << "N2 ID: " << n2->getNodeIdent() << "'\t";
+                else std::cout << "N2 NULL;\t";
+                std::cout << "n2 == n1?: " << (n2 == n1) << "\n\n";
+                
+                if (n2 != NULL && n1 != NULL && n1 != n2 && textInputting){
+                    // textInputting = true;
+                    if (tempLink.size() == 0){
+                        setTempLink(n1, n2, lstate);
+                    }
+                }else{
+                    std::cout << "EXITING INPUTTING\n";
+                    checkLinking = false;
+                    textInputting = false;
+                }
+                 resetShadowLink();
+
+                if (textInputting){
+                    char inputNode[256];
+                    memset(inputNode, '\0', 256);
+                    std::cout << "OPENING GUI\n";
+                    
+                    if (ImGui::Begin("Enter Link's Weight")){
+                        if (ImGui::InputText("Enter Weight", inputNode, 255, ImGuiInputTextFlags_EnterReturnsTrue) ){
+                            if (isNumber(inputNode)){
+                                std::string input(inputNode);
+                                ll weight = std::stoi(input);
+                                std::cout << "ENTERED WEIGHT: " << weight << "\n";
+                                graphMan->joinNodes(n1, n2, weight, lstate);
+                                resetTempLink();
+                                textInputting = false;
+                                checkLinking = false;
+                            }
+                        }
+                        ImGui::End();
+                    }
+                    
+                    
+                }
+            }
+        }
+
 
         void drawIMAlgoMenu(){
             ImGui::Begin("Run Algorithms");
@@ -283,7 +373,6 @@ class Gui{
         void runAlgoFromMenu(){
             algoMan.runFromAlgoMenu(graphMan);
         }
-
 
         //clears the entire screen of nodes and links
         void clearScreen(){
