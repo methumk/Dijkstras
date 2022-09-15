@@ -20,8 +20,10 @@ class Gui{
         sf::Text simulStateDisplay;
         size_t win_width, win_height;
         std::vector<sf::Vertex> shadowLink;
+        std::vector<sf::Vertex> shadowArrows;
         std::vector<sf::Vertex> shadowRemoveLink;
-        std::vector<sf::Vertex> tempLink;
+        std::vector<sf::Vertex> tempInputLink;
+        std::vector<sf::Vertex> tempInputArrows;
 
         //sf::Vertex* shadowLink[2];
         
@@ -207,11 +209,22 @@ class Gui{
         void setShadowLink(Node* n1, const LinkStat& lstate){
             if (n1){
                 sf::Color lcolor;
-                if (lstate == LinkStat::Doubly) lcolor = DOUBLY_COLOR;
-                else                            lcolor = SINGLY_COLOR;
+                sf::Vector2f n1Pos = n1->getNodePos();
+                if (lstate == LinkStat::Doubly){
+                    lcolor = DOUBLY_COLOR;
+                }else{
+                    lcolor = SINGLY_COLOR;
+                    sf::Vector2f ap1, ap2;
+                    sf::Vector2f midpoint = lh::getLineMidpoint(n1Pos, n1Pos);
+                    lh::getArrowPositions(n1Pos, n1Pos, midpoint, ap1, ap2);
+                    shadowArrows.push_back(sf::Vertex(n1Pos, lcolor));
+                    shadowArrows.push_back(sf::Vertex(midpoint, lcolor));
+                    shadowArrows.push_back(sf::Vertex(n1Pos, lcolor));
+                    shadowArrows.push_back(sf::Vertex(midpoint, lcolor));
+                }  
 
-                shadowLink.push_back(sf::Vertex(n1->getNodePos(), lcolor));
-                shadowLink.push_back(sf::Vertex(n1->getNodePos(), lcolor));
+                shadowLink.push_back(sf::Vertex(n1Pos, lcolor));
+                shadowLink.push_back(sf::Vertex(n1Pos, lcolor));                          
                 
             }
         }
@@ -219,21 +232,32 @@ class Gui{
         // Moves the shadow link end point to show where the user is trying to link
         void moveShadowLink(Node* n1, const sf::RenderWindow* win, const LinkStat& lstate){
             if (n1){
-                sf::Vector2f pos = sf::Vector2f(sf::Mouse::getPosition(*win));
+                sf::Vector2f n2Pos = sf::Vector2f(sf::Mouse::getPosition(*win));
                 
                 sf::Color lcolor;
                 if (lstate == LinkStat::Doubly) lcolor = DOUBLY_COLOR;
                 else                            lcolor = SINGLY_COLOR;
 
                 if (shadowLink.size() == 2){
-                    shadowLink[1] = sf::Vertex(pos, lcolor);
+                    shadowLink[1] = sf::Vertex(n2Pos, lcolor);
+                }
+                if (shadowArrows.size() == 4){
+                    sf::Vector2f n1Pos = n1->getNodePos();
+                    sf::Vector2f midpoint = lh::getLineMidpoint(n1Pos, n2Pos);
+                    lh::getArrowPositions(n1Pos, n2Pos, midpoint, n1Pos, n2Pos);
+                    shadowArrows[0] = sf::Vertex(n1Pos, lcolor);
+                    shadowArrows[1] = sf::Vertex(midpoint, lcolor);
+                    shadowArrows[2] = sf::Vertex(n2Pos, lcolor);
+                    shadowArrows[3] = sf::Vertex(midpoint, lcolor);
                 }
             }
         }
 
         // resets the shadow link
-        inline void resetShadowLink(){
+        inline void resetShadowLink(const LinkStat& lstate){
             shadowLink.clear();
+            if (lstate == LinkStat::SinglyTo)
+                shadowArrows.clear();
         }
 
         //Creates a shadow link to help the user delete a link between two nodes
@@ -258,16 +282,28 @@ class Gui{
         // Creates a temporary link between two nodes without a weight (used before getting user input for link weight)
         void setTempLink(Node* n1, Node* n2, const LinkStat& lstate){
             sf::Color lcolor;
+            sf::Vector2f n1Pos = n1->getNodePos(), n2Pos = n2->getNodePos();
             if (lstate == LinkStat::Doubly) lcolor = DOUBLY_COLOR;
-            else                            lcolor = SINGLY_COLOR;
+            else{
+                lcolor = SINGLY_COLOR;
+                sf::Vector2f ap1, ap2;
+                sf::Vector2f midpoint = lh::getLineMidpoint(n1Pos, n2Pos);
+                lh::getArrowPositions(n1Pos, n2Pos, midpoint, ap1, ap2);
+                tempInputArrows.push_back(sf::Vertex(ap1, lcolor));
+                tempInputArrows.push_back(sf::Vertex(midpoint, lcolor));
+                tempInputArrows.push_back(sf::Vertex(ap2, lcolor));
+                tempInputArrows.push_back(sf::Vertex(midpoint, lcolor));
+            }                            
 
-            tempLink.push_back(sf::Vertex(n1->getNodePos(), lcolor));
-            tempLink.push_back(sf::Vertex(n2->getNodePos(), lcolor));
+            tempInputLink.push_back(sf::Vertex(n1Pos, lcolor));
+            tempInputLink.push_back(sf::Vertex(n2Pos, lcolor));
         }
 
         // resets the shadow link
-        inline void resetTempLink(){
-            tempLink.clear();
+        inline void resetTempLink(const LinkStat& lstate){
+            tempInputLink.clear();
+            if (lstate == LinkStat::SinglyTo)
+                tempInputArrows.clear();
         }
 
         inline void resetShadowRemoveLink(){
@@ -290,14 +326,20 @@ class Gui{
 
 
         void renderLinks(sf::RenderWindow* win){
-            if (shadowLink.size() == 2){
+            if (shadowLink.size() > 0){
                 win->draw(shadowLink.data(), shadowLink.size(), sf::Lines);
             }
-            if (shadowRemoveLink.size() == 2){
+            if (shadowArrows.size() > 0){
+                win->draw(shadowArrows.data(), shadowArrows.size(), sf::Lines);
+            }
+            if (shadowRemoveLink.size() > 0){
                 win->draw(shadowRemoveLink.data(), shadowRemoveLink.size(), sf::Lines);
             }
-            if (tempLink.size() == 2){
-                win->draw(tempLink.data(), tempLink.size(), sf::Lines);
+            if (tempInputLink.size() > 0){
+                win->draw(tempInputLink.data(), tempInputLink.size(), sf::Lines);
+            }
+            if (tempInputArrows.size() > 0){
+                win->draw(tempInputArrows.data(), tempInputArrows.size(), sf::Lines);
             }
         }
 
@@ -312,16 +354,16 @@ class Gui{
 
         void renderLinkWeightBox(Node* n1, Node* n2, const LinkStat& lstate, bool& textInputting, bool& checkLinking){
             if (checkLinking){
-                std::cout << "TEXTINPUTTING: " << textInputting << "\n";
+                /* std::cout << "TEXTINPUTTING: " << textInputting << "\n";
                 if (n1) std::cout << "N1 ID: " << n1->getNodeIdent() << "'\t";
                 else std::cout << "N1 NULL;\t";
                 if (n2) std::cout << "N2 ID: " << n2->getNodeIdent() << "'\t";
                 else std::cout << "N2 NULL;\t";
-                std::cout << "n2 == n1?: " << (n2 == n1) << "\n\n";
+                std::cout << "n2 == n1?: " << (n2 == n1) << "\n\n"; */
                 
                 if (n2 != NULL && n1 != NULL && n1 != n2 && textInputting){
                     // textInputting = true;
-                    if (tempLink.size() == 0){
+                    if (tempInputLink.size() == 0){
                         setTempLink(n1, n2, lstate);
                     }
                 }else{
@@ -329,7 +371,7 @@ class Gui{
                     checkLinking = false;
                     textInputting = false;
                 }
-                 resetShadowLink();
+                 resetShadowLink(lstate);
 
                 if (textInputting){
                     char inputNode[256];
@@ -343,7 +385,7 @@ class Gui{
                                 ll weight = std::stoi(input);
                                 std::cout << "ENTERED WEIGHT: " << weight << "\n";
                                 graphMan->joinNodes(n1, n2, weight, lstate);
-                                resetTempLink();
+                                resetTempLink(lstate);
                                 textInputting = false;
                                 checkLinking = false;
                             }

@@ -77,6 +77,8 @@ int main(){
                                 //when mouse is clicked on a node, save the node position to mouse_on_node
                                 std::cout << "HELD\n";
                                 checkLinking = false;
+                                linkNode1 = NULL;
+                                linkNode2 = NULL;
                                 left_clicked_on_node = game.mouseOverNode(&window, NODE_RADIUS);
                                 game.setShadowLink(left_clicked_on_node, link_state);
                             }else if (state == SimulState::RemoveNodeMode){

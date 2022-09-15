@@ -24,6 +24,97 @@ enum class LinkStat {Doubly, SinglyTo};
 // #define PI_4 0.785398163397448
 // #endif
 
+// Line helpers
+namespace lh{
+    //gets the angle between two points in radians (p1 is pointing to p2)
+    //Angle ranges from 0 to 180 starting from second quad
+    float getLineAngle(const sf::Vector2f& p1, const sf::Vector2f& p2){
+        float lineX = p1.x > p2.x ? p1.x - p2.x : p2.x - p1.x;
+                
+        float lineangle = atan((p1.y - p2.y)/(lineX));
+        //lineangle *= (180/M_PI);
+        
+        if (lineangle < 0){
+            lineangle *= -1;
+            if ((p1.x > p2.x) && (lineangle < M_PI_2)){
+                lineangle = M_PI - lineangle;  
+                //std::cout << "\tnegative adding\n";
+            } 
+        }else{
+            if ((p1.x < p2.x) && (lineangle < M_PI_2)){
+                lineangle = M_PI - lineangle;
+                //std::cout << "\tpos adding\n";
+            }
+        }
+        //return lineangle*(M_PI/180);
+        return lineangle;
+    }
+
+    sf::Vector2f getLineMidpoint(const sf::Vector2f& p1, const sf::Vector2f& p2){
+        return sf::Vector2f((p1.x + p2.x)/2, (p1.y + p2.y)/2);
+    }
+
+    //point p1 is node that is pointing to point p2
+    void getArrowPositions(const sf::Vector2f& p1, const sf::Vector2f& p2, const sf::Vector2f& midpoint, sf::Vector2f& arrow1, sf::Vector2f& arrow2){
+        float lineangle = getLineAngle(p1, p2);
+        // std::cout << "lineangle: " << lineangle*(180/M_PI) << std::endl;
+
+        /* std::cout << "TESTING RIGHT ANGLES..................\n";
+        sf::Vector2f x1(0,0);
+        sf::Vector2f x2(-10,0);
+        std::cout << "X2 Left X1: " << getLineAngle(x1, x2)*(180/M_PI) << std::endl;
+        x2.x = 0;
+        x2.y = -10;
+        std::cout << "X2 TOP X1: " << getLineAngle(x1, x2)*(180/M_PI) << std::endl;
+        x2.x = 10;
+        x2.y = 0;
+        std::cout << "X2 RIGHT X1: " << getLineAngle(x1, x2)*(180/M_PI) << std::endl;
+        x2.x = 0;
+        x2.y = 10;
+        std::cout << "X2 BOTTOM X1: " << getLineAngle(x1, x2)*(180/M_PI) << std::endl;
+        std::cout << "END OF TEST RIGHT ANGLES...............\n"; */
+        
+        if (lineangle <= M_PI_2){
+            // std::cout << "LINE NE\n";
+            if (p1.x > p2.x){
+                // std::cout << "ARROW POINTS LEFT\n";
+                arrow1.x = midpoint.x - ARROW_LEN*cosf(3*M_PI_4 + lineangle);
+                arrow1.y = midpoint.y - ARROW_LEN*sinf(3*M_PI_4 + lineangle);
+                arrow2.x = midpoint.x - ARROW_LEN*cosf(5*M_PI_4 + lineangle);
+                arrow2.y = midpoint.y - ARROW_LEN*sinf(5*M_PI_4 + lineangle);
+            }else{
+                // std::cout << "ARROW POINTS RIGHT\n";
+                arrow1.x = midpoint.x - ARROW_LEN*cosf(M_PI_4 + lineangle);
+                arrow1.y = midpoint.y - ARROW_LEN*sinf(M_PI_4 + lineangle);
+                arrow2.x = midpoint.x - ARROW_LEN*cosf(lineangle - M_PI_4);
+                arrow2.y = midpoint.y - ARROW_LEN*sinf(lineangle - M_PI_4);
+            }
+        }else{
+            // std::cout << "LINE NW\n";
+            if (p1.x <= p2.x){
+                // std::cout << "ARROW POINTS RIGHT\n";
+                arrow1.x = midpoint.x - ARROW_LEN*cosf(3*M_PI_4 + lineangle);
+                arrow1.y = midpoint.y - ARROW_LEN*sinf(3*M_PI_4 + lineangle);
+                arrow2.x = midpoint.x - ARROW_LEN*cosf(5*M_PI_4 + lineangle);
+                arrow2.y = midpoint.y - ARROW_LEN*sinf(5*M_PI_4 + lineangle);
+            }else{
+                // std::cout << "ARROW POINTS LEFT\n";
+                arrow1.x = midpoint.x - ARROW_LEN*cosf(M_PI_4 + lineangle);
+                arrow1.y = midpoint.y - ARROW_LEN*sinf(M_PI_4 + lineangle);
+                arrow2.x = midpoint.x - ARROW_LEN*cosf(lineangle - M_PI_4);
+                arrow2.y = midpoint.y - ARROW_LEN*sinf(lineangle - M_PI_4);
+            }
+        }
+
+    }
+
+    //Rotates a point aroung an origin point 90 degrees clock wise
+    inline sf::Vector2f cwOrthRotation(const sf::Vector2f& point_to_rotate, const sf::Vector2f& origin){
+        return sf::Vector2f((point_to_rotate.y - origin.y) + origin.x,-1*(point_to_rotate.x - origin.x) + origin.y);
+    } 
+
+}
+
 class Links{
     private:
         typedef long long ll;
@@ -34,35 +125,6 @@ class Links{
         std::unordered_map<std::string, size_t> nodes_arrows;               //bool cooresponding to whether nodes have an arrow (for singly linked)
         std::vector<sf::Text> link_weights;
         std::unordered_map<std::string, size_t> nodes_weights;
-
-        //gets the angle between two points in radians (p1 is pointing to p2)
-        //Angle ranges from 0 to 180 starting from second quad
-        float getLineAngle(const sf::Vector2f& p1, const sf::Vector2f& p2){
-            float lineX = p1.x > p2.x ? p1.x - p2.x : p2.x - p1.x;
-                    
-            float lineangle = atan((p1.y - p2.y)/(lineX));
-            //lineangle *= (180/M_PI);
-            
-            if (lineangle < 0){
-                lineangle *= -1;
-                if ((p1.x > p2.x) && (lineangle < M_PI_2)){
-                    lineangle = M_PI - lineangle;  
-                    //std::cout << "\tnegative adding\n";
-                } 
-            }else{
-                if ((p1.x < p2.x) && (lineangle < M_PI_2)){
-                    lineangle = M_PI - lineangle;
-                    //std::cout << "\tpos adding\n";
-                }
-            }
-            //return lineangle*(M_PI/180);
-            return lineangle;
-        }
-
-        //Rotates a point aroung an origin point 90 degrees clock wise
-        inline sf::Vector2f cwOrthRotation(const sf::Vector2f& point_to_rotate, const sf::Vector2f& origin){
-            return sf::Vector2f((point_to_rotate.y - origin.y) + origin.x,-1*(point_to_rotate.x - origin.x) + origin.y);
-        } 
     public:
         Links(){
             if (!font.loadFromFile("./Dijkstras/open-sans/OpenSans-Semibold.ttf")){
@@ -93,7 +155,7 @@ class Links{
         //new addlink, will take link state as arugment
         //point p1 is node that is pointing to point p2 if singly linked
         void addLink(const sf::Vector2f& p1, const sf::Vector2f& p2, const ll& node1, const ll& node2, const ll& weight, const LinkStat& lstate){
-            sf::Vector2f midpoint((p1.x + p2.x)/2, (p1.y + p2.y)/2);
+            sf::Vector2f midpoint = lh::getLineMidpoint(p1, p2);
             //set link color based on link state
             sf::Color lcolor;
             if (lstate == LinkStat::Doubly) lcolor = DOUBLY_COLOR;
@@ -111,9 +173,9 @@ class Links{
             // float slope = (p2.y-p1.y)/(p2.x-p1.x);
             // float intercept = p2.y - slope*(p2.x);
             // sf::Vector2f weightPos(p1.x + ((p2.x - p1.x)/2.5), p1.y + ((p2.y - p1.y)/2.5));
-            sf::Vector2f wp(midpoint.x+EDGE_WEIGHT_ORTH_DIST*cosf(getLineAngle(p1, p2)), midpoint.y+EDGE_WEIGHT_ORTH_DIST*sinf(getLineAngle(p1, p2)));
+            sf::Vector2f wp(midpoint.x+EDGE_WEIGHT_ORTH_DIST*cosf(lh::getLineAngle(p1, p2)), midpoint.y+EDGE_WEIGHT_ORTH_DIST*sinf(lh::getLineAngle(p1, p2)));
             //sf::Vector2f weightPos(p1.x+ARROW_LEN, slope*(p1.x+ARROW_LEN) + intercept);
-            link_weights.push_back(setTextInfo(weight, 10, sf::Color(255, 0, 0), cwOrthRotation(wp, midpoint)));
+            link_weights.push_back(setTextInfo(weight, 10, sf::Color(255, 0, 0), lh::cwOrthRotation(wp, midpoint)));
             size_t w_idx = link_weights.size()-1;
             nodes_weights[n_l_identifier1] = w_idx;
             nodes_weights[n_l_identifier2] = w_idx;
@@ -127,56 +189,8 @@ class Links{
 
                 //draw the arrow to show singly linked nodes (from -> to)
                 if (lstate == LinkStat::SinglyTo){
-                    float lineangle = getLineAngle(p1, p2);
-                    std::cout << "lineangle: " << lineangle*(180/M_PI) << std::endl;
-
-                    /* std::cout << "TESTING RIGHT ANGLES..................\n";
-                    sf::Vector2f x1(0,0);
-                    sf::Vector2f x2(-10,0);
-                    std::cout << "X2 Left X1: " << getLineAngle(x1, x2)*(180/M_PI) << std::endl;
-                    x2.x = 0;
-                    x2.y = -10;
-                    std::cout << "X2 TOP X1: " << getLineAngle(x1, x2)*(180/M_PI) << std::endl;
-                    x2.x = 10;
-                    x2.y = 0;
-                    std::cout << "X2 RIGHT X1: " << getLineAngle(x1, x2)*(180/M_PI) << std::endl;
-                    x2.x = 0;
-                    x2.y = 10;
-                    std::cout << "X2 BOTTOM X1: " << getLineAngle(x1, x2)*(180/M_PI) << std::endl;
-                    std::cout << "END OF TEST RIGHT ANGLES...............\n"; */
-                    
                     sf::Vector2f ap1, ap2;
-                    if (lineangle <= M_PI_2){
-                        std::cout << "LINE NE\n";
-                        if (p1.x > p2.x){
-                            std::cout << "ARROW POINTS LEFT\n";
-                            ap1.x = midpoint.x - ARROW_LEN*cosf(3*M_PI_4 + lineangle);
-                            ap1.y = midpoint.y - ARROW_LEN*sinf(3*M_PI_4 + lineangle);
-                            ap2.x = midpoint.x - ARROW_LEN*cosf(5*M_PI_4 + lineangle);
-                            ap2.y = midpoint.y - ARROW_LEN*sinf(5*M_PI_4 + lineangle);
-                        }else{
-                            std::cout << "ARROW POINTS RIGHT\n";
-                            ap1.x = midpoint.x - ARROW_LEN*cosf(M_PI_4 + lineangle);
-                            ap1.y = midpoint.y - ARROW_LEN*sinf(M_PI_4 + lineangle);
-                            ap2.x = midpoint.x - ARROW_LEN*cosf(lineangle - M_PI_4);
-                            ap2.y = midpoint.y - ARROW_LEN*sinf(lineangle - M_PI_4);
-                        }
-                    }else{
-                        std::cout << "LINE NW\n";
-                        if (p1.x <= p2.x){
-                            std::cout << "ARROW POINTS RIGHT\n";
-                            ap1.x = midpoint.x - ARROW_LEN*cosf(3*M_PI_4 + lineangle);
-                            ap1.y = midpoint.y - ARROW_LEN*sinf(3*M_PI_4 + lineangle);
-                            ap2.x = midpoint.x - ARROW_LEN*cosf(5*M_PI_4 + lineangle);
-                            ap2.y = midpoint.y - ARROW_LEN*sinf(5*M_PI_4 + lineangle);
-                        }else{
-                            std::cout << "ARROW POINTS LEFT\n";
-                            ap1.x = midpoint.x - ARROW_LEN*cosf(M_PI_4 + lineangle);
-                            ap1.y = midpoint.y - ARROW_LEN*sinf(M_PI_4 + lineangle);
-                            ap2.x = midpoint.x - ARROW_LEN*cosf(lineangle - M_PI_4);
-                            ap2.y = midpoint.y - ARROW_LEN*sinf(lineangle - M_PI_4);
-                        }
-                    }
+                    lh::getArrowPositions(p1, p2, midpoint, ap1, ap2);
 
                     arrows.push_back(sf::Vertex(ap1, lcolor));
                     arrows.push_back(sf::Vertex(midpoint, lcolor));
