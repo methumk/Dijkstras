@@ -23,7 +23,7 @@ Graph class:
 
 class Graph{
     private:
-        typedef std::tuple<Node*, ll, ll, bool> ADJ_NODE;
+        typedef std::tuple<Node*, ll, ll, bool> ADJ_NODE;               //(tuple: curr node, link weight, link identifier, link type (can main node access curr node))
         size_t win_width, win_height;                                   //keeps track of the interface window width and height
         size_t num_graphs;                                              //keeps track of the total number of graphs
         ll curr_node_ident;                                            //used to create a new unique node identifier
@@ -530,6 +530,7 @@ class Graph{
             //Check to see link status between both nodes
             bool alreadyConnected = 0;
             bool n1_con;
+            ll currLinkWeight = 0;
             std::vector<ADJ_NODE> links = n1->getNodeLinks();
             size_t n1_l_idx;
             for (size_t i =0; i < links.size(); ++i){
@@ -538,6 +539,7 @@ class Graph{
                     alreadyConnected = 1;
                     n1_l_idx = i;
                     n1_con = std::get<3>(links[i]);
+                    currLinkWeight = std::get<1>(links[i]);
                     break;
                 }
             }
@@ -603,6 +605,12 @@ class Graph{
                         }
                     } */
 
+                }else if(currLinkWeight != link_weight){
+                    std::cout << "\tUPDATING LINK WEIGHT\n";
+                    n1->changeLinkWeight(n1_l_idx, link_weight);
+                    n2->changeLinkWeight(n2_l_idx, link_weight);
+                    GUIlinks.updateLinkWeight(n1->getNodeIdent(), n2->getNodeIdent(), link_weight);
+                    
                 }
             }
         }

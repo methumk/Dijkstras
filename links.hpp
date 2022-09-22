@@ -134,15 +134,15 @@ class Links{
         }
 
         sf::Text setTextInfo(const ll& weight, const int& charSize, const sf::Color& fillColor, const sf::Vector2f& pos){
-            sf::Text text;
-            text.setFont(font);
-            text.setString(std::to_string(weight));
-            text.setCharacterSize(charSize);
-            text.setOrigin(text.getLocalBounds().width/2., text.getLocalBounds().height/2.);
-            text.setPosition(pos);
-            text.setFillColor(fillColor);  
+            sf::Text linkWeight;
+            linkWeight.setFont(font);
+            linkWeight.setString(std::to_string(weight));
+            linkWeight.setCharacterSize(charSize);
+            linkWeight.setOrigin(linkWeight.getLocalBounds().width/2., linkWeight.getLocalBounds().height/2.);
+            linkWeight.setPosition(pos);
+            linkWeight.setFillColor(fillColor);  
 
-            return text;
+            return linkWeight;
         }
 
         //creates a link in the vector of vertices
@@ -150,6 +150,20 @@ class Links{
             all_links.push_back(sf::Vertex(p1, c1));
             all_links.push_back(sf::Vertex(p2, c2));
         } */
+
+        void updateLinkWeight(const ll& node1, const ll& node2, const ll& newWeight){
+            std::string n_l_identifier1 = std::to_string(node1) + "_" + std::to_string(node2);
+            
+            if (nodes_weights.count(n_l_identifier1)){
+                size_t weightIdx = nodes_weights[n_l_identifier1];
+                sf::Text weight = link_weights[weightIdx];
+                weight.setString(std::to_string(newWeight));
+                link_weights[weightIdx] = weight;
+            }else{
+                std::cout << "Node weight updating has no mapping\n";
+                exit(EXIT_FAILURE);
+            }
+        }
 
 
         //new addlink, will take link state as arugment

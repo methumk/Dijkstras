@@ -30,6 +30,7 @@ class Gui{
         // NOTE: currently just supporting positive weights
         bool isNumber(const std::string& str)
         {
+            if (str == "") return false;
             for (int i=0; i < str.size(); ++i) {
                 // if (i==0 && str[i] == '-'){
                 //     continue;
@@ -254,7 +255,7 @@ class Gui{
         }
 
         // resets the shadow link
-        inline void resetShadowLink(const LinkStat& lstate){
+        inline void clearShadowLink(const LinkStat& lstate){
             shadowLink.clear();
             if (lstate == LinkStat::SinglyTo)
                 shadowArrows.clear();
@@ -300,13 +301,13 @@ class Gui{
         }
 
         // resets the shadow link
-        inline void resetTempLink(const LinkStat& lstate){
+        inline void clearTempLink(const LinkStat& lstate){
             tempInputLink.clear();
             if (lstate == LinkStat::SinglyTo)
                 tempInputArrows.clear();
         }
 
-        inline void resetShadowRemoveLink(){
+        inline void clearShadowRemoveLink(){
             shadowRemoveLink.clear();
         }
         
@@ -371,7 +372,7 @@ class Gui{
                     checkLinking = false;
                     textInputting = false;
                 }
-                 resetShadowLink(lstate);
+                clearShadowLink(lstate);
 
                 if (textInputting){
                     char inputNode[256];
@@ -380,12 +381,18 @@ class Gui{
                     
                     if (ImGui::Begin("Enter Link's Weight")){
                         if (ImGui::InputText("Enter Weight", inputNode, 255, ImGuiInputTextFlags_EnterReturnsTrue) ){
-                            if (isNumber(inputNode)){
-                                std::string input(inputNode);
+                            std::string input(inputNode);
+                            if (input.empty()){
+                                std::cout << "STRING EMPTY\n";
+                                clearTempLink(lstate);
+                                textInputting = false;
+                                checkLinking = false;
+                            }else if (isNumber(inputNode)){
+                                std::cout << "IS NUMBER\n";
                                 ll weight = std::stoi(input);
                                 std::cout << "ENTERED WEIGHT: " << weight << "\n";
                                 graphMan->joinNodes(n1, n2, weight, lstate);
-                                resetTempLink(lstate);
+                                clearTempLink(lstate);
                                 textInputting = false;
                                 checkLinking = false;
                             }

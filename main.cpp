@@ -115,7 +115,7 @@ int main(){
                                 }
                             }else if (state == SimulState::RemoveLinkMode){
                                 game.removeLink(left_clicked_on_node, game.mouseOverNode(&window, NODE_RADIUS));
-                                game.resetShadowRemoveLink();
+                                game.clearShadowRemoveLink();
                             }
                             left_clicked_on_node = NULL;
                         }else if (event.mouseButton.button == sf::Mouse::Right){

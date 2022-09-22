@@ -123,7 +123,7 @@ class Node{
         }
 
         //changes the link weight of an existing node link
-        void changeLinkWeight(const size_t idx, ll lw){
+        void changeLinkWeight(const size_t idx, const ll lw){
             if (idx >= 0 && idx < links.size()){
                 std::get<1>(links[idx]) = lw;
             }else{
