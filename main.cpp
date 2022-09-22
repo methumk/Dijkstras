@@ -35,6 +35,7 @@ void mousePos(sf::RenderWindow* window){
 //Created seperate enums for removing nodes and links (don't know if this will be the case in the future)
 enum class SimulState {AddNodeMode, AddLinkMode, RemoveNodeMode, RemoveLinkMode};
 const std::string simulStateDisplay[4] = {"Adding Nodes", "Adding Links", "Removing Nodes", "Removing Links"};
+const std::string simulStateLinkType[2] = {"Single Link", "Double Link"};
 
 int main(){
 #if SIMUL
@@ -45,7 +46,7 @@ int main(){
     sf::Vector2i left_mpos, curr_mpos;
     const int win_width = 1200;
     const int win_height = 750;
-    Gui game(win_width, win_height, simulStateDisplay[(int) state]);
+    Gui game(win_width, win_height, simulStateDisplay[(int) state], simulStateLinkType[(int) link_state]);
     Node *right_clicked_on_node = NULL, *left_clicked_on_node = NULL;
     Node *linkNode1 = NULL, *linkNode2 = NULL;
 
@@ -189,6 +190,7 @@ int main(){
         //render SFML objects
         window.clear();
         game.drawSimulStateIndicator(&window, simulStateDisplay[(int) state]);
+        game.drawSimulStateLinkType(&window, simulStateLinkType[(int) link_state]);
         game.renderLinks(&window);
         game.renderGraphs(&window);
         ImGui::SFML::Render(window);

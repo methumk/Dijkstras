@@ -18,6 +18,7 @@ class Gui{
         sf::Font nodeFont;
         sf::Font simulStateFont;
         sf::Text simulStateDisplay;
+        sf::Text simulStateLinkType;
         size_t win_width, win_height;
         std::vector<sf::Vertex> shadowLink;
         std::vector<sf::Vertex> shadowArrows;
@@ -44,7 +45,7 @@ class Gui{
 
     public:
 
-        Gui(const int& w_width, const int& w_height, const std::string simulStateText){
+        Gui(const int& w_width, const int& w_height, const std::string simulStateText, const std::string simulLinkText){
             //try to load in font needed to display text
             if (!nodeFont.loadFromFile("./Dijkstras/open-sans/OpenSans-Semibold.ttf")){
                 std::cerr << "GUI CONSTRUCTOR - Error while loading node font - EXITING\n";
@@ -66,6 +67,13 @@ class Gui{
             simulStateDisplay.setOrigin(simulStateDisplay.getLocalBounds().width, 0);
             simulStateDisplay.setPosition(sf::Vector2f(win_width, 10));
             simulStateDisplay.setFillColor(SIMUL_STATE_DISPLAY_COLOR);
+
+            simulStateLinkType.setFont(simulStateFont);
+            simulStateLinkType.setString(simulLinkText);
+            simulStateLinkType.setCharacterSize(15);
+            simulStateLinkType.setOrigin(simulStateLinkType.getLocalBounds().width, 0);
+            simulStateLinkType.setPosition(sf::Vector2f(win_width-10, simulStateDisplay.getLocalBounds().height+20));
+            simulStateLinkType.setFillColor(simulLinkText == "Single Link"? SINGLY_COLOR : DOUBLY_COLOR);
         }
 
         //returns the euclidean distance between two integer points
@@ -417,6 +425,13 @@ class Gui{
             simulStateDisplay.setOrigin(simulStateDisplay.getLocalBounds().width, 0);
             simulStateDisplay.setPosition(sf::Vector2f(win_width-10, 10));
             win->draw(simulStateDisplay);
+        }
+
+        void drawSimulStateLinkType(sf::RenderWindow* win, const std::string linkText){
+            simulStateLinkType.setString(linkText);
+            simulStateLinkType.setOrigin(simulStateLinkType.getLocalBounds().width, 0);
+            simulStateLinkType.setFillColor(linkText == "Single Link"? SINGLY_COLOR : DOUBLY_COLOR);
+            win->draw(simulStateLinkType);
         }
 
         void runAlgoFromMenu(){
