@@ -10,6 +10,7 @@ gui.hpp
 
 #define REM_SHADOW_COLOR sf::Color::Red
 #define SIMUL_STATE_DISPLAY_COLOR sf::Color(255, 156, 18)
+#define CONTROL_BORDER_COLOR sf::Color(105, 105, 150)
 
 class Gui{
     private:
@@ -19,7 +20,9 @@ class Gui{
         sf::Font simulStateFont;
         sf::Text simulStateDisplay;
         sf::Text simulStateLinkType;
+        sf::RectangleShape controlBorder;
         size_t win_width, win_height;
+        size_t simul_width, simul_height;
         std::vector<sf::Vertex> shadowLink;
         std::vector<sf::Vertex> shadowArrows;
         std::vector<sf::Vertex> shadowRemoveLink;
@@ -45,7 +48,7 @@ class Gui{
 
     public:
 
-        Gui(const int& w_width, const int& w_height, const std::string simulStateText, const std::string simulLinkText){
+        Gui(const int& w_width, const int& w_height, const int& s_width, const int& s_height, const std::string simulStateText, const std::string simulLinkText){
             //try to load in font needed to display text
             if (!nodeFont.loadFromFile("./Dijkstras/open-sans/OpenSans-Semibold.ttf")){
                 std::cerr << "GUI CONSTRUCTOR - Error while loading node font - EXITING\n";
@@ -54,7 +57,9 @@ class Gui{
 
             win_width = w_width;
             win_height = w_height;
-            graphMan = new Graph(win_width, win_height);
+            simul_width = s_width;
+            simul_height = s_height;
+            graphMan = new Graph(win_width, win_height, simul_width, simul_height);
 
             if (!simulStateFont.loadFromFile("./Dijkstras/Mollen/Mollen-Bold.otf")){
                 std::cerr << "GUI CONSTRUCTOR - Error while loading simul state font - EXITING\n";
@@ -65,7 +70,7 @@ class Gui{
             simulStateDisplay.setCharacterSize(20);
             // simulStateDisplay.getLocalBounds().width/2., simulStateDisplay.getLocalBounds().height/2.
             simulStateDisplay.setOrigin(simulStateDisplay.getLocalBounds().width, 0);
-            simulStateDisplay.setPosition(sf::Vector2f(win_width, 10));
+            simulStateDisplay.setPosition(sf::Vector2f(s_width, 10));
             simulStateDisplay.setFillColor(SIMUL_STATE_DISPLAY_COLOR);
 
             simulStateLinkType.setFont(simulStateFont);
@@ -74,6 +79,11 @@ class Gui{
             simulStateLinkType.setOrigin(simulStateLinkType.getLocalBounds().width, 0);
             simulStateLinkType.setPosition(sf::Vector2f(win_width-10, simulStateDisplay.getLocalBounds().height+20));
             simulStateLinkType.setFillColor(simulLinkText == "Single Link"? SINGLY_COLOR : DOUBLY_COLOR);
+
+            controlBorder.setSize(sf::Vector2f(w_width - s_width, s_height));
+            controlBorder.setFillColor(CONTROL_BORDER_COLOR);
+            controlBorder.setPosition(s_width, 0);
+
         }
 
         //returns the euclidean distance between two integer points
@@ -83,51 +93,70 @@ class Gui{
 
         //check if the mouse position is within a node boundary and the radius distance
         bool withinBoundary(Node* n, const sf::Vector2i& mpos, size_t node_radius){
-            sf::Vector2i npos = sf::Vector2i(n->getNodePos());
+            if (n){
+                sf::Vector2i npos = sf::Vector2i(n->getNodePos());
 
-            int node_xs = npos.x-node_radius, node_xe = npos.x+node_radius;
-            int node_ys = npos.y-node_radius, node_ye = npos.y+node_radius;
-            if (node_xs < 0) node_xs = 0;
-            if (node_ys < 0) node_ys = 0;
-            if (node_xe >= win_width) node_xe = win_width-1;
-            if (node_ye >= win_height) node_ye = win_height-1;
+                int node_xs = npos.x-node_radius, node_xe = npos.x+node_radius;
+                int node_ys = npos.y-node_radius, node_ye = npos.y+node_radius;
+                if (node_xs < 0) node_xs = 0;
+                if (node_ys < 0) node_ys = 0;
+                if (node_xe >= simul_width) node_xe = simul_width-1;
+                if (node_ye >= simul_height) node_ye = simul_height-1;
 
-            if (euclidDist(npos, mpos) <= node_radius && 
-                ((node_xs <= mpos.x) && (mpos.x <= node_xe)) && 
-                ((node_ys <= mpos.y) && (mpos.y <= node_ye))){
-                return true;
+                if (euclidDist(npos, mpos) <= node_radius && 
+                    ((node_xs <= mpos.x) && (mpos.x <= node_xe)) && 
+                    ((node_ys <= mpos.y) && (mpos.y <= node_ye))){
+                    return true;
+                }
             }
+            
             return false;
         }
 
         //checks a reduced range based on the mouse position to determine if the mouse is over a node
         Node* mouseOverNode(const sf::RenderWindow* win, size_t node_radius){
-            Node** iloc = graphMan->getNodeIlocs();
+            // Node** iloc = graphMan->getNodeIlocs();
             sf::Vector2i mpos = sf::Mouse::getPosition(*win);
 
             //determine if mouse is over valid range
-            if (mpos.x >= 0 && mpos.y >=0){
+            // UPDATING
+            if (mpos.x >= 0 && mpos.y >=0 && mpos.x <= simul_width && mpos.y <= simul_height){
                 //determine where to start looking for the node
                 int ys = mpos.y-node_radius, ye=mpos.y+node_radius;
                 int xs = mpos.x-node_radius, xe=mpos.x+node_radius;
                 if (ys < 0) ys = 0;
                 if (xs < 0) xs = 0;
-                if (xe >= win_width) xe = win_width-1;
-                if (ye >= win_height) ye = win_height-1;
+                if (xe >= simul_width) xe = simul_width-1;
+                if (ye >= simul_height) ye = simul_height-1;
                 
-                //std::cout << "1 - Searched\n" << "\tyStart: " << ys << " yEnd: " << ye << "\n\txStart: " << xs << " xEnd: " << xe << '\n';
+                // std::cout << "1 - Searched\n" << "\tyStart: " << ys << " yEnd: " << ye << "\n\txStart: " << xs << " xEnd: " << xe << '\n';
                 
                 //search the interface reduced range
                 for (int y = ys; y <= ye; ++y){
                     for (int x = xs; x <= xe; ++x){
-                        int idx = win_width*y + x;
-                        if (iloc[idx] != NULL && withinBoundary(iloc[idx], mpos, node_radius))
-                            return iloc[idx];
+                        size_t idx = simul_width*y + x;
+                        // UPDATING
+                        // if (iloc[idx] != NULL && withinBoundary(iloc[idx], mpos, node_radius))
+                        //     return iloc[idx];
+                        Node* cpn = graphMan->getNodeAtPosition(idx);
+                        // std::cout << "searching: " << idx << "\n";
+                        if (cpn != NULL && withinBoundary(cpn, mpos, node_radius)){
+                            return cpn;
+                        }
                     }
                 }
             }
 
             return NULL;
+        }
+
+        bool nodeWithinSimulBoundary(const sf::RenderWindow* win){
+            sf::Vector2i mpos = sf::Mouse::getPosition(*win);
+            if (mpos.x-NODE_RADIUS >= 0 && mpos.y-NODE_RADIUS >=0 && mpos.x+NODE_RADIUS <= simul_width && mpos.y+NODE_RADIUS <= simul_height){
+                return true;
+            }else{
+                return false;
+            }
         }
 
         //determines if a node was clicked on by the left button and finds it
@@ -164,9 +193,9 @@ class Gui{
         //attempts to create a new node displayed on the interface
         void addNode(const sf::RenderWindow* win){
             //adds node if new node doesn't overlap with existing nodes
-            if (!mouseOverNode(win, NODE_RADIUS*4)){
+            if (nodeWithinSimulBoundary(win) && !mouseOverNode(win, NODE_RADIUS*4)){
                 sf::Vector2i pos = sf::Mouse::getPosition(*win);
-                std::cout << "2 - node created at position: " << win_width*pos.y + pos.x << " x: " << pos.x << " y: " << pos.y << '\n';
+                std::cout << "2 - node created at position: " << simul_width*pos.y + pos.x << " x: " << pos.x << " y: " << pos.y << '\n';
                 graphMan->createNewNode(pos, nodeFont);
             }
         }
@@ -204,6 +233,13 @@ class Gui{
                 // linkNodesThread.launch();
                 // renderLinkWeightBox(nodeInputting);
             }
+        }
+
+        // Set the selected node for the algo to use
+        void selectNodeForAlgo(const sf::RenderWindow* win, size_t node_radius)
+        {
+            // TODO: WORKING
+            algoMan.setSelectedAlgoNode(mouseOverNode(win, node_radius));
         }
 
 
@@ -328,7 +364,8 @@ class Gui{
                 - render graphs
         */
         void drawIMGraphViewer(){
-            ImGui::Begin("Graph Viewer");
+            ImGui::Begin("Graph Viewer", NULL, ImGuiWindowFlags_NoMove);
+            ImGui::SetWindowPos(ImVec2(simul_width+20, 20));
             graphMan->drawGraphViewer();
             ImGui::End();
         }
@@ -414,10 +451,16 @@ class Gui{
         }
 
 
-        void drawIMAlgoMenu(){
-            ImGui::Begin("Run Algorithms");
-            algoMan.displayAlgosMenu();
+        void drawIMAlgoMenu(AlgoToRun& runAlgo){
+            ImGui::Begin("Run Algorithms", NULL, ImGuiWindowFlags_NoMove);
+            ImVec2 vec(10, 10);
+            ImGui::SetWindowPos(vec);
+            algoMan.displayAlgosMenu(runAlgo);
             ImGui::End();
+        }
+
+        void drawControlBorder(sf::RenderWindow* win){
+            win->draw(controlBorder);
         }
 
         void drawSimulStateIndicator(sf::RenderWindow* win, const std::string stateText){
@@ -430,18 +473,25 @@ class Gui{
         void drawSimulStateLinkType(sf::RenderWindow* win, const std::string linkText){
             simulStateLinkType.setString(linkText);
             simulStateLinkType.setOrigin(simulStateLinkType.getLocalBounds().width, 0);
+            simulStateLinkType.setPosition(sf::Vector2f(win_width-10, simulStateDisplay.getLocalBounds().height+20));
             simulStateLinkType.setFillColor(linkText == "Single Link"? SINGLY_COLOR : DOUBLY_COLOR);
             win->draw(simulStateLinkType);
         }
 
-        void runAlgoFromMenu(){
-            algoMan.runFromAlgoMenu(graphMan);
+
+        void displayAlgosStartMenu(bool& algoSelectingNode){
+            algoMan.displayAlgosStartMenu();
+            // TODO: remove after toggling algo menu
+            algoSelectingNode = algoMan.selectMode != NodeSelectMode::NoSelected;
         }
 
         //clears the entire screen of nodes and links
         void clearScreen(){
-            delete graphMan;
-            graphMan = new Graph(win_width, win_height);
+            // UPDATING
+            // delete graphMan;
+            // graphMan = new Graph(win_width, win_height, simul_width, simul_height);
+            // graphMan->freeAllNodes();
+            graphMan->eraseAllGraphs();
         }
 
         ~Gui(){

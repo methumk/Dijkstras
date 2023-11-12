@@ -6,7 +6,7 @@
 #include <iostream>
 #include <functional>
 #include <chrono>
-#include <unistd.h>
+// #include <unistd.h>
 #include <fcntl.h>
 
 using namespace std::chrono;
@@ -33,25 +33,35 @@ void mousePos(sf::RenderWindow* window){
 #define SIMUL 1
 
 //Created seperate enums for removing nodes and links (don't know if this will be the case in the future)
-enum class SimulState {AddNodeMode, AddLinkMode, RemoveNodeMode, RemoveLinkMode};
-const std::string simulStateDisplay[4] = {"Adding Nodes", "Adding Links", "Removing Nodes", "Removing Links"};
-const std::string simulStateLinkType[2] = {"Single Link", "Double Link"};
+enum class SimulState {AddNodeMode, AddLinkMode, RemoveNodeMode, RemoveLinkMode, SelectNodeMode, ViewMode};
+const std::string simulStateDisplay[] = {"Adding Nodes", "Adding Links", "Removing Nodes", "Removing Links", "Selecting Algo Node", "View Only"};
+const std::string simulStateLinkType[] = {"Double Link", "Single Link"};
 
 int main(){
 #if SIMUL
-    static bool leftPressed = false, rigthPressed = false, middlePressed = false, dragging = false, textInputting = false, algoMode = false, checkLinking = false;
-    static SimulState state = SimulState::AddNodeMode;
-    static AlgoToRun runningAlgo = NoAlgo;
-    static LinkStat link_state = LinkStat::Doubly;
+    static bool leftPressed = false, rigthPressed = false, middlePressed = false, dragging = false, textInputting = false, checkLinking = false;
+    static SimulState state = SimulState::AddNodeMode; 
+    static SimulState saveState = SimulState::AddNodeMode; 
+    static LinkStat link_state = LinkStat::SinglyTo;
+
+    static AlgoToRun runningAlgo = NoAlgo; 
+    // NOTE: algoMode might not be needed if runningAlgo exist
+    static bool algoMode = false, algoSelectingNode = false;
+    Node *algoStartNode = NULL, *algoFindNode = NULL;
+
     sf::Vector2i left_mpos, curr_mpos;
-    const int win_width = 1200;
+    const int win_width = 1700;
     const int win_height = 750;
-    Gui game(win_width, win_height, simulStateDisplay[(int) state], simulStateLinkType[(int) link_state]);
+    const int simul_width = 1200;
+    const int simul_height = 750;
+
+    Gui game(win_width, win_height, simul_width, simul_height, simulStateDisplay[(int) state], simulStateLinkType[(int) link_state]);
     Node *right_clicked_on_node = NULL, *left_clicked_on_node = NULL;
     Node *linkNode1 = NULL, *linkNode2 = NULL;
 
     sf::RenderWindow window(sf::VideoMode(win_width, win_height), "Dijkstra", sf::Style::Close);
-    
+    window.setVerticalSyncEnabled(true);
+
     ImGui::SFML::Init(window);
     sf::Clock deltaClock;
     
@@ -87,6 +97,8 @@ int main(){
                             }else if (state == SimulState::RemoveLinkMode){
                                 left_clicked_on_node = game.mouseOverNode(&window, NODE_RADIUS);
                                 game.setShadowRemoveLink(left_clicked_on_node);
+                            }else if (state == SimulState::SelectNodeMode){
+                                game.selectNodeForAlgo(&window, NODE_RADIUS);
                             }
                             
                         }else if (sf::Mouse::isButtonPressed(sf::Mouse::Right)){
@@ -138,17 +150,21 @@ int main(){
                         }else if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)){
                             if (state == SimulState::AddNodeMode){
                                 std::cout << "\n\nMode Activated: Adding links\n";
+                                saveState = state;
                                 state = SimulState::AddLinkMode;
                             }else{
                                 std::cout << "\n\nMode Activated: Adding Nodes\n";
+                                saveState = state;
                                 state = SimulState::AddNodeMode;
                             }
                         }else if (sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
                             if (state == SimulState::RemoveNodeMode){
                                 std::cout << "\n\nMode Activated: Removing Links\n";
+                                saveState = state;
                                 state = SimulState::RemoveLinkMode;
                             }else{
                                 std::cout << "\n\nMode Activated: Removing Nodes\n";
+                                saveState = state;
                                 state = SimulState::RemoveNodeMode; 
                             }
                         }else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Num1)){
@@ -181,16 +197,26 @@ int main(){
 
         //game.onDragNode(&window, right_clicked_on_node, left_mpos, dragging);
 
+        window.clear();
         //draw ImGui objects
         game.drawIMGraphViewer();
-        game.drawIMAlgoMenu();
-        game.runAlgoFromMenu();
+        game.drawIMAlgoMenu(runningAlgo);
+        if (runningAlgo != AlgoToRun::NoAlgo)
+        {
+            saveState = state;
+            game.displayAlgosStartMenu(algoSelectingNode);
+            if (algoSelectingNode) {state = SimulState::SelectNodeMode;}
+        }
         game.renderLinkWeightBox(linkNode1, linkNode2, link_state, textInputting, checkLinking);
 
         //render SFML objects
-        window.clear();
+        game.drawControlBorder(&window);
         game.drawSimulStateIndicator(&window, simulStateDisplay[(int) state]);
-        game.drawSimulStateLinkType(&window, simulStateLinkType[(int) link_state]);
+        if ((int)state < (int)SimulState::SelectNodeMode)
+        {
+            // Don't display link state if in selectNodeMode or ViewMode
+            game.drawSimulStateLinkType(&window, simulStateLinkType[(int) link_state]);
+        }
         game.renderLinks(&window);
         game.renderGraphs(&window);
         ImGui::SFML::Render(window);
