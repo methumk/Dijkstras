@@ -17,6 +17,7 @@ Graph class:
 #include <unordered_set>
 #include <string>
 #include <math.h>
+#include <utility>
 
 #include "node.hpp"
 
@@ -24,6 +25,7 @@ Graph class:
 class Graph{
     private:
         typedef std::tuple<Node*, ll, ll, bool> ADJ_NODE;               //(tuple: curr node, link weight, link identifier, link type (can main node access curr node))
+        size_t simul_width, simul_height;                                   //keeps track of the interface window width and height
         size_t win_width, win_height;                                   //keeps track of the interface window width and height
         size_t num_graphs;                                              //keeps track of the total number of graphs
         ll curr_node_ident;                                            //used to create a new unique node identifier
@@ -31,23 +33,31 @@ class Graph{
         std::vector<Node*> all_graphs;                                  //vector containing all graphs
         std::vector<size_t> open_locs;                                  //Keeps track of indices in all_graphs that are null
         std::unordered_map<ll, size_t> node_locs;                      //<Node identifier, all_graphs index> Keeps track of a nodes location in all_graphs                  
-        Node** node_ilocs;                                              //Keeps track of the location of each node in the window interface                     
+        //UPDATING
+        // Node** node_ilocs;                                              //Keeps track of the location of each node in the window interface  
+        std::unordered_map<size_t, Node*> node_wlocs;                      //Better version of keeping track of each node in the window interface  
+
         Links GUIlinks;                                                 //Lines used to represent links between nodes on the interface
         //NOT YET IMPLEMENTED: Keeps track of open cells in all_graphs (might implement later - to deal with all_graphs space usage)
         //std::unordered_set<size_t> open_locs;
     public:
         Graph(): curr_node_ident(0), curr_link_ident(0), num_graphs(0){};
 
-        Graph(const int& w_width, const int& w_height): curr_node_ident(0), curr_link_ident(0), num_graphs(0){
+        Graph(const int& w_width, const int& w_height, const int& s_width, const int& s_height): curr_node_ident(0), curr_link_ident(0), num_graphs(0){
             //initialize node interface location array
-            size_t i_size = w_width*w_height;
-            node_ilocs = new Node*[i_size];
-            for (size_t i=0; i < i_size; ++i)
-                node_ilocs[i] = NULL;
+            size_t i_size = s_width*s_height;
+
+            // UPDATING
+            // node_ilocs = new Node*[i_size];
+            // for (size_t i=0; i < i_size; ++i)
+            //     node_ilocs[i] = NULL;
 
             //save window dimensions
             win_width = w_width;
             win_height = w_height;
+            //save simul dimensions
+            simul_width = s_width;
+            simul_height = s_height;
 
             //set the primitive type for the interface links
             //GUIlinks.setPrimitiveType(sf::Lines);
@@ -128,123 +138,123 @@ class Graph{
         }
 
 
-        //determines if it's legal to move node to a new position
-        void moveNode(Node* node, sf::Vector2f& oldpos, sf::Vector2f& newpos){
-            /* sf::Vector2i move_offset = sf::Vector2i(newpos - oldpos);
-            sf::Vector2i npos = sf::Vector2i(node->getNodePos());
-            bool move_right = move_offset.x > 0? true : false;
-            bool move_down = move_offset.y > 0? true : false;
-            size_t start_pos = npos.y*win_width + npos.x;
-            size_t x_last_empty;
+        // //determines if it's legal to move node to a new position
+        // void moveNode(Node* node, sf::Vector2f& oldpos, sf::Vector2f& newpos){
+        //     /* sf::Vector2i move_offset = sf::Vector2i(newpos - oldpos);
+        //     sf::Vector2i npos = sf::Vector2i(node->getNodePos());
+        //     bool move_right = move_offset.x > 0? true : false;
+        //     bool move_down = move_offset.y > 0? true : false;
+        //     size_t start_pos = npos.y*simul_width + npos.x;
+        //     size_t x_last_empty;
 
-            //boundary check x-axis
-            if (move_right){
-                size_t x_travelled = move_offset.x-1;
-                for (size_t x = start_pos+1; x < (npos.y*win_width + win_width)-NODE_RADIUS && x_travelled >= 0; ++x){
-                    if (node_ilocs[x] == NULL){
-                        x_last_empty = x;
-                        x_travelled--;
-                    }
-                }
-            }else{
-                if (move_offset.x != 0){
-                    if (newpos.x-NODE_RADIUS < 0) newpos.x = NODE_RADIUS;
-                }
-            }
+        //     //boundary check x-axis
+        //     if (move_right){
+        //         size_t x_travelled = move_offset.x-1;
+        //         for (size_t x = start_pos+1; x < (npos.y*simul_width + simul_width)-NODE_RADIUS && x_travelled >= 0; ++x){
+        //             if (node_ilocs[x] == NULL){
+        //                 x_last_empty = x;
+        //                 x_travelled--;
+        //             }
+        //         }
+        //     }else{
+        //         if (move_offset.x != 0){
+        //             if (newpos.x-NODE_RADIUS < 0) newpos.x = NODE_RADIUS;
+        //         }
+        //     }
 
-            //boundary check y-axis  
-            if (move_down){
-                if (newpos.y+NODE_RADIUS >= win_height) newpos.y = win_height-NODE_RADIUS;
-            }else{
-                if (move_offset.y != 0){
-                    if (newpos.y-NODE_RADIUS < 0) newpos.y = NODE_RADIUS;
-                }
-            } */
-            sf::Vector2i move_offset = sf::Vector2i(newpos - oldpos);
-            bool move_down = move_offset.y > 0? true : false;
-            bool move_right = move_offset.x > 0? true : false;
-            int farthest_empty;
-            sf::Vector2i adjusted_newpos;
-            sf::Vector2i adjusted_offset(0, 0);
+        //     //boundary check y-axis  
+        //     if (move_down){
+        //         if (newpos.y+NODE_RADIUS >= simul_height) newpos.y = simul_height-NODE_RADIUS;
+        //     }else{
+        //         if (move_offset.y != 0){
+        //             if (newpos.y-NODE_RADIUS < 0) newpos.y = NODE_RADIUS;
+        //         }
+        //     } */
+        //     sf::Vector2i move_offset = sf::Vector2i(newpos - oldpos);
+        //     bool move_down = move_offset.y > 0? true : false;
+        //     bool move_right = move_offset.x > 0? true : false;
+        //     int farthest_empty;
+        //     sf::Vector2i adjusted_newpos;
+        //     sf::Vector2i adjusted_offset(0, 0);
 
-            if (move_offset.x == 0){
-                //dragging node only on the y-axis
-                int remaining_ydist = move_offset.y;
-                size_t curr_x = int(oldpos.x);
+        //     if (move_offset.x == 0){
+        //         //dragging node only on the y-axis
+        //         int remaining_ydist = move_offset.y;
+        //         size_t curr_x = int(oldpos.x);
                 
-                if (move_down){
-                    //determine farthest you can go right without interacting border or other node
-                    for (size_t y = int(oldpos.y)+1; y < win_height-NODE_RADIUS && remaining_ydist > 0; ++y){
-                        if (node_ilocs[win_width*y + curr_x] == NULL)
-                            farthest_empty = y;
-                        else 
-                            break;
-                        --remaining_ydist;
-                    }
+        //         if (move_down){
+        //             //determine farthest you can go right without interacting border or other node
+        //             for (size_t y = int(oldpos.y)+1; y < simul_height-NODE_RADIUS && remaining_ydist > 0; ++y){
+        //                 if (node_ilocs[simul_width*y + curr_x] == NULL)
+        //                     farthest_empty = y;
+        //                 else 
+        //                     break;
+        //                 --remaining_ydist;
+        //             }
 
-                    adjusted_offset.y = farthest_empty - int(oldpos.y);
+        //             adjusted_offset.y = farthest_empty - int(oldpos.y);
 
-                }else{
-                    //determine farthest you can go left without interacting border or other node
-                    for (size_t y = int(oldpos.y)-1; y >= 0+NODE_RADIUS && remaining_ydist < 0; --y){
-                        if (node_ilocs[win_width*y + curr_x] == NULL)
-                            farthest_empty = y;
-                        else   
-                            break;
-                        ++remaining_ydist;
-                    }
+        //         }else{
+        //             //determine farthest you can go left without interacting border or other node
+        //             for (size_t y = int(oldpos.y)-1; y >= 0+NODE_RADIUS && remaining_ydist < 0; --y){
+        //                 if (node_ilocs[simul_width*y + curr_x] == NULL)
+        //                     farthest_empty = y;
+        //                 else   
+        //                     break;
+        //                 ++remaining_ydist;
+        //             }
 
-                    adjusted_offset.y = int(oldpos.y) - farthest_empty;
+        //             adjusted_offset.y = int(oldpos.y) - farthest_empty;
 
-                }
-            }else if (move_offset.y == 0){
-                //dragging node only on the x-axis 
-                int remaining_xdist = move_offset.x;
-                size_t curr_y = int(oldpos.y)*win_width;
+        //         }
+        //     }else if (move_offset.y == 0){
+        //         //dragging node only on the x-axis 
+        //         int remaining_xdist = move_offset.x;
+        //         size_t curr_y = int(oldpos.y)*simul_width;
 
-                if (move_right){
-                    //determine farthest you can go right without interacting border or other node
-                    for (size_t x = int(oldpos.x)+1; x < win_width-NODE_RADIUS && remaining_xdist > 0; ++x){
-                        if (node_ilocs[curr_y + x] == NULL)
-                            farthest_empty = x;
-                        else 
-                            break;
-                        --remaining_xdist;
-                    }
+        //         if (move_right){
+        //             //determine farthest you can go right without interacting border or other node
+        //             for (size_t x = int(oldpos.x)+1; x < simul_width-NODE_RADIUS && remaining_xdist > 0; ++x){
+        //                 if (node_ilocs[curr_y + x] == NULL)
+        //                     farthest_empty = x;
+        //                 else 
+        //                     break;
+        //                 --remaining_xdist;
+        //             }
 
-                    adjusted_offset.x = farthest_empty - int(oldpos.x);
+        //             adjusted_offset.x = farthest_empty - int(oldpos.x);
 
-                }else{
-                    //determine farthest you can go left without interacting border or other node
-                    for (size_t x = int(oldpos.x)-1; x >= 0+NODE_RADIUS && remaining_xdist < 0; --x){
-                        if (node_ilocs[curr_y + x] == NULL)
-                            farthest_empty = x;
-                        else   
-                            break;
-                        ++remaining_xdist;
-                    }
+        //         }else{
+        //             //determine farthest you can go left without interacting border or other node
+        //             for (size_t x = int(oldpos.x)-1; x >= 0+NODE_RADIUS && remaining_xdist < 0; --x){
+        //                 if (node_ilocs[curr_y + x] == NULL)
+        //                     farthest_empty = x;
+        //                 else   
+        //                     break;
+        //                 ++remaining_xdist;
+        //             }
 
-                    adjusted_offset.x = int(oldpos.x) - farthest_empty;
+        //             adjusted_offset.x = int(oldpos.x) - farthest_empty;
 
-                }
-            }else{
-                int dx_dy = round(move_offset.x/move_offset.y);
-                int dy_dx = round(move_offset.y/move_offset.x);
+        //         }
+        //     }else{
+        //         int dx_dy = round(move_offset.x/move_offset.y);
+        //         int dy_dx = round(move_offset.y/move_offset.x);
 
-                if (dx_dy > dy_dx){
+        //         if (dx_dy > dy_dx){
 
-                }else if (dy_dx > dx_dy){
+        //         }else if (dy_dx > dx_dy){
 
-                }else{
+        //         }else{
 
-                }
+        //         }
 
-            }
+        //     }
 
-            node->setNodePos(adjusted_offset + sf::Vector2i(node->getNodePos()));
+        //     node->setNodePos(adjusted_offset + sf::Vector2i(node->getNodePos()));
 
 
-        }
+        // }
 
         //gets the head node of a graph at index i
         inline Node* getGraphHead(size_t i){
@@ -285,8 +295,23 @@ class Graph{
         }
 
         //returns the node interface location array
-        inline Node** getNodeIlocs(){
-            return node_ilocs;
+        // inline Node** getNodeIlocs(){
+        //     return node_ilocs;
+        // }
+
+        Node* getNodeAtPosition(const sf::Vector2i& pos){
+            int node_pos = simul_width*pos.y + pos.x;
+            if (node_wlocs.count(node_pos)){
+                return node_wlocs[node_pos];
+            }
+            return NULL;
+        }
+
+        Node* getNodeAtPosition(const size_t& node_pos){
+            if (node_wlocs.count(node_pos)){
+                return node_wlocs[node_pos];
+            }
+            return NULL;
         }
 
         //Runs a depth first search on the graph to find node with the given identifier (Returns NULL if node was not in the graph)
@@ -357,33 +382,45 @@ class Graph{
 
         //creates a new individual node and implants it as its own graph at position pos
         void createNewNode(sf::Vector2i pos, sf::Font& font){
-            ll ident = getNewNodeIdent();
-            Node* nn = new Node(ident, sf::Vector2f(pos), font);
+            // Node created within simul bounds
+            if (pos.x-NODE_RADIUS >= 0 && pos.y-NODE_RADIUS >= 0 && pos.x+NODE_RADIUS <= simul_width && pos.y+NODE_RADIUS <= simul_height){
+                ll ident = getNewNodeIdent();
+                Node* nn = new Node(ident, sf::Vector2f(pos), font);
 
-            // determine where to place the new node in all_graphs
-            size_t open_idx = all_graphs.size();
-            if (open_locs.size() > 0){
-                open_idx = open_locs[0]; 
-                open_locs.erase(open_locs.begin());
-                all_graphs[open_idx] = nn;   
-            }else{
-                all_graphs.push_back(nn);
+                // determine where to place the new node in all_graphs
+                size_t open_idx = all_graphs.size();
+                if (open_locs.size() > 0){
+                    open_idx = open_locs[0]; 
+                    open_locs.erase(open_locs.begin());
+                    all_graphs[open_idx] = nn;   
+                }else{
+                    all_graphs.push_back(nn);
+                }
+
+                //store mapping from identity to all_graphs index
+                node_locs[ident] = open_idx;
+
+                
+                // set the node in the interface array
+                size_t iloc = simul_width*pos.y + pos.x;
+                // UPDATING:
+                // if (node_ilocs[iloc] == NULL){
+                //     node_ilocs[iloc] = nn;
+                // }else{
+                //     std::cout << "\tCREATE NODE - adding to iloc position: " << iloc << " is not null - EXITING\n";
+                //     exit(EXIT_FAILURE);
+                // }
+                if (node_wlocs.count(iloc) <= 0){
+                    // node_wlocs.insert(std::make_pair<size_t,Node*>(iloc, nn));
+                    node_wlocs.insert({iloc, nn});
+                    // node_wlocs[iloc] = nn;
+                }else{
+                    std::cout << "\tCREATE NODE WITH MAP - adding to iloc position: " << iloc << " is not null - EXITING\n";
+                    exit(EXIT_FAILURE);
+                }
+
+                num_graphs++;
             }
-
-            //store mapping from identity to all_graphs index
-            node_locs[ident] = open_idx;
-
-            
-            // set the node in the interface array
-            size_t iloc = win_width*pos.y + pos.x;
-            if (node_ilocs[iloc] == NULL){
-                node_ilocs[iloc] = nn;
-            }else{
-                std::cout << "\tCREATE NODE - adding to iloc position: " << iloc << " is not nll - EXITING\n";
-                exit(EXIT_FAILURE);
-            }
-
-            num_graphs++;
         }
 
         // debugging graph deleting 
@@ -750,8 +787,9 @@ class Graph{
             num_graphs--;
 
             // remove NTD from GUI 
-            size_t ipos = win_width*npos.y + npos.x;
-            node_ilocs[ipos] = NULL;
+            size_t ipos = simul_width*npos.y + npos.x;
+            // UPDATING
+            node_wlocs.erase(ipos);
 
             // free NTD
             delete NTD;
@@ -959,7 +997,16 @@ class Graph{
             for (size_t i=0; i < all_graphs.size(); i++){
                 if (all_graphs[i] != NULL)
                     eraseGraph(all_graphs[i]);
+            }
         }
+
+        void freeAllNodes(){
+            std::cout << node_wlocs.size() << std::endl;
+            for (auto& node : node_wlocs){
+                std::cout << "TEST\n";
+                std::cout << "\tFreeing node: " << (node.second)->getNodeIdent() << '\n';
+                delete node.second;
+            }
         }
 
 
@@ -967,14 +1014,21 @@ class Graph{
         //deconstructor deletes every node for all the graphs
         ~Graph(){
             //eraseAllGraphs();
-
-            std::cout << "Freeing all nodes\n";
-            for (size_t i=0; i < win_width*win_height; ++i){
-                if (node_ilocs[i] != nullptr){
-                        std::cout << "\tFreeing node: " << node_ilocs[i]->getNodeIdent() << '\n';
-                        delete node_ilocs[i];
-                        node_ilocs[i] = NULL;
-                }
+            // UPDATING
+            // std::cout << "Freeing all nodes\n";
+            // for (size_t i=0; i < simul_width*simul_height; ++i){
+            //     if (node_ilocs[i] != nullptr){
+            //             std::cout << "\tFreeing node: " << node_ilocs[i]->getNodeIdent() << '\n';
+            //             delete node_ilocs[i];
+            //             node_ilocs[i] = NULL;
+            //     }
+            // }
+            std::cout << "Freeing all MAPPED Nodes\n";
+            // freeAllNodes();
+            for (auto& node : node_wlocs){
+                std::cout << "TEST\n";
+                std::cout << "\tFreeing node: " << (node.second)->getNodeIdent() << '\n';
+                delete node.second;
             }
         }
 };
