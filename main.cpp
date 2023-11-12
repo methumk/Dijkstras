@@ -32,16 +32,10 @@ void mousePos(sf::RenderWindow* window){
 
 #define SIMUL 1
 
-//Created seperate enums for removing nodes and links (don't know if this will be the case in the future)
-enum class SimulState {AddNodeMode, AddLinkMode, RemoveNodeMode, RemoveLinkMode, SelectNodeMode, ViewMode};
-const std::string simulStateDisplay[] = {"Adding Nodes", "Adding Links", "Removing Nodes", "Removing Links", "Selecting Algo Node", "View Only"};
-const std::string simulStateLinkType[] = {"Double Link", "Single Link"};
-
 int main(){
 #if SIMUL
     static bool leftPressed = false, rigthPressed = false, middlePressed = false, dragging = false, textInputting = false, checkLinking = false;
     static SimulState state = SimulState::AddNodeMode; 
-    static SimulState saveState = SimulState::AddNodeMode; 
     static LinkStat link_state = LinkStat::SinglyTo;
 
     static AlgoToRun runningAlgo = NoAlgo; 
@@ -150,21 +144,17 @@ int main(){
                         }else if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)){
                             if (state == SimulState::AddNodeMode){
                                 std::cout << "\n\nMode Activated: Adding links\n";
-                                saveState = state;
                                 state = SimulState::AddLinkMode;
                             }else{
                                 std::cout << "\n\nMode Activated: Adding Nodes\n";
-                                saveState = state;
                                 state = SimulState::AddNodeMode;
                             }
                         }else if (sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
                             if (state == SimulState::RemoveNodeMode){
                                 std::cout << "\n\nMode Activated: Removing Links\n";
-                                saveState = state;
                                 state = SimulState::RemoveLinkMode;
                             }else{
                                 std::cout << "\n\nMode Activated: Removing Nodes\n";
-                                saveState = state;
                                 state = SimulState::RemoveNodeMode; 
                             }
                         }else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Num1)){
@@ -200,13 +190,7 @@ int main(){
         window.clear();
         //draw ImGui objects
         game.drawIMGraphViewer();
-        game.drawIMAlgoMenu(runningAlgo);
-        if (runningAlgo != AlgoToRun::NoAlgo)
-        {
-            saveState = state;
-            game.displayAlgosStartMenu(algoSelectingNode);
-            if (algoSelectingNode) {state = SimulState::SelectNodeMode;}
-        }
+        game.drawIMAlgoMenu(runningAlgo, state);
         game.renderLinkWeightBox(linkNode1, linkNode2, link_state, textInputting, checkLinking);
 
         //render SFML objects

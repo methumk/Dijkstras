@@ -12,6 +12,11 @@ gui.hpp
 #define SIMUL_STATE_DISPLAY_COLOR sf::Color(255, 156, 18)
 #define CONTROL_BORDER_COLOR sf::Color(105, 105, 150)
 
+//Created seperate enums for removing nodes and links (don't know if this will be the case in the future)
+enum class SimulState {AddNodeMode, AddLinkMode, RemoveNodeMode, RemoveLinkMode, SelectNodeMode, ViewMode};
+const std::string simulStateDisplay[] = {"Adding Nodes", "Adding Links", "Removing Nodes", "Removing Links", "Selecting Algo Node", "View Only"};
+const std::string simulStateLinkType[] = {"Double Link", "Single Link"};
+
 class Gui{
     private:
         Graph* graphMan;
@@ -451,12 +456,19 @@ class Gui{
         }
 
 
-        void drawIMAlgoMenu(AlgoToRun& runAlgo){
+        void drawIMAlgoMenu(AlgoToRun& runAlgo, SimulState& state){
             ImGui::Begin("Run Algorithms", NULL, ImGuiWindowFlags_NoMove);
             ImVec2 vec(10, 10);
             ImGui::SetWindowPos(vec);
             algoMan.displayAlgosMenu(runAlgo);
             ImGui::End();
+
+            if (runAlgo != AlgoToRun::NoAlgo)
+            {
+                bool algoSelectingNode = false;
+                displayAlgosStartMenu(algoSelectingNode);
+                if (algoSelectingNode) {state = SimulState::SelectNodeMode;}
+            }
         }
 
         void drawControlBorder(sf::RenderWindow* win){
