@@ -196,7 +196,7 @@ int main(){
         //render SFML objects
         game.drawControlBorder(&window);
         game.drawSimulStateIndicator(&window, simulStateDisplay[(int) state]);
-        if ((int)state < (int)SimulState::SelectNodeMode)
+        if (state < SimulState::SelectNodeMode)
         {
             // Don't display link state if in selectNodeMode or ViewMode
             game.drawSimulStateLinkType(&window, simulStateLinkType[(int) link_state]);

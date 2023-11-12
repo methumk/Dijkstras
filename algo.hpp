@@ -70,94 +70,98 @@ class Algos{
         // Start menu to allow user to click on start/find nodes
         void displayAlgosStartMenu()
         {
+            // No start menu if no algo selected
+            if (runAlgo == AlgoToRun::NoAlgo) return;
+
             std::string startButtonName, findButtonName;
             std::string startText, findText;
             std::string algoName = runAlgo != AlgoToRun::NoAlgo ? algo_init_menu[(int)runAlgo] : "";
             bool startButton = false;
             bool findButton = false;
-            switch(runAlgo){
-                case DFS:
-                case BFS:
-                    ImGui::Begin(algoName.c_str(), NULL, ImGuiWindowFlags_NoMove);
+
+            ImGui::Begin(algoName.c_str(), NULL, ImGuiWindowFlags_NoMove);
                     
-                    // Node button selection group
-                    ImGui::BeginGroup();
-                    startButtonName = startSelectPressed ? "X###1" : "O###1";
-                    findButtonName = findSelectPressed ? "X###2" : "O###2";
-
-                    if (ImGui::Button(startButtonName.c_str(), ImVec2(20, 20))){
-                        if (startSelectPressed || findSelectPressed)
-                        {
-                            // Button pressed when start/find node is already selected -> clear button's node
-                            selectMode = NodeSelectMode::NoSelected;
-                            startSelectPressed = false;
-                            startN = NULL;
-                            std::cout << algoName+" start toggled off\n";
-                        }else if (!startSelectPressed){
-                            // Button pressed and so selecting start node
-                            selectMode = NodeSelectMode::StartSelected;
-                            startSelectPressed = true;
-                            std::cout << algoName+" start toggled on\n";
-                        }
-                    }
-                    if (ImGui::Button(findButtonName.c_str(), ImVec2(20, 20))){
-                        if (startSelectPressed || findSelectPressed)
-                        {
-                            // Button pressed when start/find node is already selected -> clear button's node
-                            selectMode = NodeSelectMode::NoSelected;
-                            findSelectPressed = false;
-                            findN = NULL;
-                            std::cout << algoName+" find toggled off\n";
-                        }else if (!findSelectPressed){
-                            // Button pressed and so selecting find node
-                            selectMode = NodeSelectMode::FindSelected;
-                            findSelectPressed = true;
-                            std::cout << algoName+" find toggled on\n";
-                        }
-                    }
-                    ImGui::EndGroup();
-
-                    // Button descriptions
-                    ImGui::SameLine();
-                    ImGui::BeginGroup();
-                    startText = startN ? "Starting at node: "+std::to_string(startN->getNodeIdent()) : "Select starting node";  
-                    findText = findN ? "Finding node: "+std::to_string(findN->getNodeIdent()) : "Select node to find"; 
-                    ImGui::Text(startText.c_str());
-                    ImGui::Text(findText.c_str());
-                    ImGui::EndGroup();
-                    ImGui::End();
-                    break;
-                case Dijkstra:
-                    break;
-                default:
-                    break;
+            // Node button selection group
+            ImGui::BeginGroup();
+            startButtonName = startSelectPressed ? "X###1" : "O###1";
+            if (ImGui::Button(startButtonName.c_str(), ImVec2(20, 20))){
+                if (startSelectPressed || findSelectPressed)
+                {
+                    // Button pressed when start/find node is already selected -> clear button's node
+                    selectMode = NodeSelectMode::NoSelected;
+                    startSelectPressed = false;
+                    startN = NULL;
+                    std::cout << algoName+" start toggled off\n";
+                }else if (!startSelectPressed){
+                    // Button pressed and so selecting start node
+                    selectMode = NodeSelectMode::StartSelected;
+                    startSelectPressed = true;
+                    std::cout << algoName+" start toggled on\n";
+                }
             }
+
+            // Find node only matters for BFS/DFS
+            if (runAlgo < AlgoToRun::Dijkstra)
+            {
+                findButtonName = findSelectPressed ? "X###2" : "O###2";
+                if (ImGui::Button(findButtonName.c_str(), ImVec2(20, 20))){
+                    if (startSelectPressed || findSelectPressed)
+                    {
+                        // Button pressed when start/find node is already selected -> clear button's node
+                        selectMode = NodeSelectMode::NoSelected;
+                        findSelectPressed = false;
+                        findN = NULL;
+                        std::cout << algoName+" find toggled off\n";
+                    }else if (!findSelectPressed){
+                        // Button pressed and so selecting find node
+                        selectMode = NodeSelectMode::FindSelected;
+                        findSelectPressed = true;
+                        std::cout << algoName+" find toggled on\n";
+                    }
+                }
+            }
+            ImGui::EndGroup();
+
+            // Button descriptions
+            ImGui::SameLine();
+            ImGui::BeginGroup();
+            startText = startN ? "Starting at node: "+std::to_string(startN->getNodeIdent()) : "Select starting node";  
+            ImGui::Text(startText.c_str());
+            if (runAlgo != AlgoToRun::Dijkstra)
+            {
+                findText = findN ? "Finding node: "+std::to_string(findN->getNodeIdent()) : "Select node to find"; 
+                ImGui::Text(findText.c_str());
+            }
+            ImGui::EndGroup();
+
+            // Create run algo button if algo nodes selected
+            if (startN && (findN || runAlgo == AlgoToRun::Dijkstra))
+            {
+                std::string runAlgoMessage = "Run " + algo_list[(int) runAlgo] + " algorithm";
+                if (ImGui::Button(runAlgoMessage.c_str(), ImVec2(250, 25)))
+                {
+                    std::cout << runAlgoMessage+" clicked\n";
+                }
+            }
+            ImGui::End();
         }
 
         // Helper to allow node to be selected as either start/find node for algorithm
         // Should only be called if start menu is open
         void setSelectedAlgoNode(Node* selected)
         {
-            if (!selected)
-            {
-                std::cout << "\tNo node selected for algorithm to run\n";
-                return;
-            }
-
             if (selectMode == NodeSelectMode::StartSelected && startSelectPressed)
             {
                 startN = selected;
                 selectMode = NodeSelectMode::NoSelected;
                 startSelectPressed = false; 
-                // findSelectPressed = false; 
-                std::cout << "Saved Node: " << std::to_string(startN->getNodeIdent()) << " as start\n";
+                std::cout << "Saved Node: " << (startN ? std::to_string(startN->getNodeIdent()) : "NULL") << " as start\n";
             }else if (selectMode == NodeSelectMode::FindSelected && findSelectPressed)
             {
                 findN = selected;
                 selectMode = NodeSelectMode::NoSelected;
                 findSelectPressed = false;
-                // startSelectPressed = false; 
-                std::cout << "Saved Node: " << std::to_string(findN->getNodeIdent()) << " as find\n";
+                std::cout << "Saved Node: " << (findN ? std::to_string(findN->getNodeIdent()) : "NULL") << " as find\n";
             }
         }
 
@@ -167,20 +171,6 @@ class Algos{
                     return false;
             }
             return true;
-        }
-
-        void displayClickNode(const std::string& title, const std::string& descrip, const size_t x, const size_t y)
-        {
-            ImGui::Begin(title.c_str());
-            ImVec2 vec(x, y);
-            ImGui::SetWindowPos(vec);
-            ImGui::Text(descrip.c_str());
-            ImGui::End();
-        }
-
-        void graphDFSMan()
-        {   
-
         }
 
         
