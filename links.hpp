@@ -127,7 +127,7 @@ class Links{
         std::unordered_map<std::string, size_t> nodes_weights;
     public:
         Links(){
-            if (!font.loadFromFile("./Dijkstras/open-sans/OpenSans-Semibold.ttf")){
+            if (!font.loadFromFile("./Dijkstras/fonts/open-sans/OpenSans-Semibold.ttf")){
                 std::cerr << "LINKS CONSTRUCTOR - Error while loading font - EXITING\n";
                 exit(EXIT_FAILURE);
             }
