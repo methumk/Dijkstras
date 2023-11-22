@@ -12,22 +12,67 @@ static const std::string algo_init_menu[] = {"DFS Menu", "BFS Menu", "Dijkstra M
 enum AlgoToRun {DFS, BFS, Dijkstra, NoAlgo};
 enum AlgoAnimationMode {Pause, Play, Close};        // TODO: forward, backward
 enum NodeSelectMode {NoSelected, StartSelected, FindSelected};
+
+#define ANIM_NODE_CURR_COLOR        sf::Color(102, 255, 153)    // greenish
+#define ANIM_NODE_VIS_COLOR         sf::Color(255, 102, 217)    // purplish
+#define ANIM_NODE_WILL_VIS_COLOR    sf::Color(255, 217, 102)    // orangish
+
+struct AnimationSteps
+{
+    size_t step = 0;                                // Current step in algorithm (also index to vector array to get nodes)
+    size_t allSteps = 0;                            // Total number of steps/ might not be necessary
+    std::vector<Node*> currNodes;                   // Current node(s) algorithm is on
+    std::vector<Node*> visitedNodes;                // Nodes that have been visited
+    std::vector<Node*> willVisNodes;                // Nodes that will be visited
+    std::unordered_map<ll, Node*> touched;          // All nodes that have been touched to be cleaned after algo finishes
+
+    // TODO: algorithm needs to feed into this class??
+    
+    void clean()
+    {
+        for (auto node = touched.begin(); node != touched.end(); ++node)
+        {
+            node->second->setNodeFillColor(NODE_FILL_COLOR);
+            node->second->setNodeOutlineColor(NODE_OUT_COLOR);      // NOTE: might not be necessary
+        }
+    }
+};
+
+struct AnimTable
+{
+    std::vector<std::string> tableHeader;
+    std::vector<std::vector<std::string>> tableData;
+
+
+};
+
+class AlgoDFS
+{
+    public:
+        AlgoDFS(Node* start, Node* find)
+        {
+
+        }
+};
+
 class Algos{
     public:
         //map<curr node identifier, tuple<distance from node to curr node, from node identifier>>
         typedef std::unordered_map<ll, std::tuple<long long, ll>> weight_map;
         //typedef for node links
         typedef std::tuple<Node*, ll, ll, bool> ADJ_NODE;
-        AlgoToRun runAlgo;
 
         Node* startN;
         Node* findN;
+        AlgoToRun runAlgo;
         NodeSelectMode selectMode;
         AlgoAnimationMode animMode;
 
         // Node selection start menu options
         bool startSelectPressed;
         bool findSelectPressed;
+        bool algoRunning;
+        std::string runningAlgoName;
     public:
         Algos(){
             //initialize to no algo running
@@ -41,6 +86,8 @@ class Algos{
 
             startSelectPressed = false;
             findSelectPressed = false;
+            algoRunning = false;
+            runningAlgoName = "";
         }
 
         //Displays a Menu that allows user to pick which algorithm to run
@@ -141,6 +188,8 @@ class Algos{
                 if (ImGui::Button(runAlgoMessage.c_str(), ImVec2(250, 25)))
                 {
                     std::cout << runAlgoMessage+" clicked\n";
+                    algoRunning = true;
+                    runningAlgoName = "Debugging "+algo_list[(int) runAlgo];
                 }
             }
             ImGui::End();
@@ -163,6 +212,23 @@ class Algos{
                 findSelectPressed = false;
                 std::cout << "Saved Node: " << (findN ? std::to_string(findN->getNodeIdent()) : "NULL") << " as find\n";
             }
+        }
+
+        // Clear saved algo settings
+        void quitAlgo()
+        {
+            runAlgo = NoAlgo;   
+            selectMode = NoSelected;
+            animMode = Pause;   // is this even necessary
+
+            // Clear saved nodes
+            startN = NULL;
+            findN = NULL;
+
+            startSelectPressed = false;
+            findSelectPressed = false;
+            algoRunning = false;
+            runningAlgoName = "";
         }
 
         bool checkPossibleID(char* id, int len){

@@ -71,6 +71,21 @@ class Node{
             textId.setPosition(sf::Vector2f(pos));
         }
 
+        inline void setNodeFillColor(const sf::Color& fillColor)
+        {
+            GUInode.setFillColor(fillColor);
+        }
+
+        inline void setNodeOutlineColor(const sf::Color& outlineColor)
+        {
+            GUInode.setOutlineColor(outlineColor);
+        }
+
+        inline void setTextColor(const sf::Color& color)
+        {
+            textId.setFillColor(color);
+        }
+
         //returns the position of the node
         inline sf::Vector2f getNodePos(){
             return GUInode.getPosition();

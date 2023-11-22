@@ -1,4 +1,4 @@
-#include "imgui.h" 
+#include "imgui.h"
 #include "imgui-SFML.h" 
 #include "gui.hpp"
 #include <SFML/Graphics.hpp>
@@ -74,7 +74,7 @@ int main(){
                     window.close();
                     break;
                 case sf::Event::MouseButtonPressed: 
-                    if (!textInputting){
+                    if (!textInputting && state != SimulState::ViewMode){
                         if (sf::Mouse::isButtonPressed(sf::Mouse::Left)){
                             if (state == SimulState::AddNodeMode){
                                 game.addNode(&window);
@@ -108,7 +108,7 @@ int main(){
                     break;
 
                 case sf::Event::MouseButtonReleased:
-                    if (!textInputting){
+                    if (!textInputting && state != SimulState::ViewMode){
                         if (event.mouseButton.button == sf::Mouse::Left){
                             if (state == SimulState::AddLinkMode){
                                 // game.linkNodes(left_clicked_on_node, game.mouseOverNode(&window, NODE_RADIUS), link_state, textInputting);
@@ -138,7 +138,7 @@ int main(){
                     break;
 
                 case sf::Event::KeyPressed:
-                    if (!textInputting){
+                    if (!textInputting && state != SimulState::ViewMode){
                         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)){
                             game.clearScreen();
                         }else if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)){
@@ -191,6 +191,7 @@ int main(){
         //draw ImGui objects
         game.drawIMGraphViewer();
         game.drawIMAlgoMenu(runningAlgo, state);
+        game.drawIMAlgoPlayButtons(state);
         game.renderLinkWeightBox(linkNode1, linkNode2, link_state, textInputting, checkLinking);
 
         //render SFML objects

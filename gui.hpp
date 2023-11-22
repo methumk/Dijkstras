@@ -7,7 +7,6 @@ gui.hpp
 #include <SFML/Graphics.hpp>
 #include "algo.hpp"
 #include <string>
-
 #define REM_SHADOW_COLOR sf::Color::Red
 #define SIMUL_STATE_DISPLAY_COLOR sf::Color(255, 156, 18)
 #define CONTROL_BORDER_COLOR sf::Color(105, 105, 150)
@@ -55,7 +54,7 @@ class Gui{
 
         Gui(const int& w_width, const int& w_height, const int& s_width, const int& s_height, const std::string simulStateText, const std::string simulLinkText){
             //try to load in font needed to display text
-            if (!nodeFont.loadFromFile("./Dijkstras/open-sans/OpenSans-Semibold.ttf")){
+            if (!nodeFont.loadFromFile("./Dijkstras/fonts/open-sans/OpenSans-Semibold.ttf")){
                 std::cerr << "GUI CONSTRUCTOR - Error while loading node font - EXITING\n";
                 exit(EXIT_FAILURE);
             }
@@ -66,7 +65,7 @@ class Gui{
             simul_height = s_height;
             graphMan = new Graph(win_width, win_height, simul_width, simul_height);
 
-            if (!simulStateFont.loadFromFile("./Dijkstras/Mollen/Mollen-Bold.otf")){
+            if (!simulStateFont.loadFromFile("./Dijkstras/fonts/Mollen/Mollen-Bold.otf")){
                 std::cerr << "GUI CONSTRUCTOR - Error while loading simul state font - EXITING\n";
                 exit(EXIT_FAILURE);
             }
@@ -457,6 +456,10 @@ class Gui{
 
 
         void drawIMAlgoMenu(AlgoToRun& runAlgo, SimulState& state){
+            // Don't display run algo or algo menu if in view mode (algo is running)
+            if(state == SimulState::ViewMode)
+                return;
+
             ImGui::Begin("Run Algorithms", NULL, ImGuiWindowFlags_NoMove);
             ImVec2 vec(10, 10);
             ImGui::SetWindowPos(vec);
@@ -465,9 +468,52 @@ class Gui{
 
             if (runAlgo != AlgoToRun::NoAlgo)
             {
-                bool algoSelectingNode = false;
-                displayAlgosStartMenu(algoSelectingNode);
+                algoMan.displayAlgosStartMenu();
+                bool algoSelectingNode = algoMan.selectMode != NodeSelectMode::NoSelected;
                 if (algoSelectingNode) {state = SimulState::SelectNodeMode;}
+            }
+        }
+
+        void drawIMAlgoPlayButtons(SimulState& state)
+        {
+            // if algomode
+                // draw buttons
+                // if X button clicked algoMode goes off
+            if (algoMan.algoRunning)
+            {
+                // NOTE: view mode should mean no other buttons able to be pressed
+                state = SimulState::ViewMode;
+                size_t w = simul_width+20;
+                size_t h = win_height/2;
+                size_t bw = 25, bh = 25;
+                size_t space = 7;
+                ImVec2 buttonSize(23, 23);
+                ImGui::Begin(algoMan.runningAlgoName.c_str(), NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+                // ImGui::Begin(algoMan.runningAlgoName.c_str());
+                ImGui::SetWindowPos(ImVec2(w, h));
+                ImGui::BeginGroup();
+                ImGui::SetCursorPos(ImVec2(space, bh));
+                bool play = ImGui::Button("|>", buttonSize);
+
+                ImGui::SetCursorPos(ImVec2(space + buttonSize.x + space, bh));
+                bool stepBack = ImGui::Button("<", buttonSize);
+
+                ImGui::SetCursorPos(ImVec2(space + 2*(buttonSize.x + space), bh));
+                bool stepForward = ImGui::Button(">", buttonSize);
+
+                ImGui::SetCursorPos(ImVec2(space + 3*(buttonSize.x + space), bh));
+                bool quit = ImGui::Button("X", buttonSize);
+
+                if (quit)
+                {
+                    std::cout << "EXITING ALGO\n";
+                    state = SimulState::AddNodeMode;
+                    algoMan.quitAlgo();
+                }
+
+                // TODO: should the graph be displayed here??
+                ImGui::EndGroup();
+                ImGui::End();
             }
         }
 
@@ -490,12 +536,12 @@ class Gui{
             win->draw(simulStateLinkType);
         }
 
-
-        void displayAlgosStartMenu(bool& algoSelectingNode){
-            algoMan.displayAlgosStartMenu();
-            // TODO: remove after toggling algo menu
-            algoSelectingNode = algoMan.selectMode != NodeSelectMode::NoSelected;
-        }
+        // REMOVE FUNC? called in drawIMAlgoMenu only?
+        // void displayAlgosStartMenu(bool& algoSelectingNode){
+        //     algoMan.displayAlgosStartMenu();
+        //     // TODO: remove after toggling algo menu
+        //     algoSelectingNode = algoMan.selectMode != NodeSelectMode::NoSelected;
+        // }
 
         //clears the entire screen of nodes and links
         void clearScreen(){
