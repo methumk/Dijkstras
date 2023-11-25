@@ -1,59 +1,16 @@
 /* 
 algo.hpp
-    - The dijkstra algorithm implementation
+    - Algorithm viewer and play manager
  */
 #pragma once
 #include <climits>
-#include "graph.hpp"
+#include "algoAnimation.hpp"
 
 //List of possible algos the user can run
 static const std::string algo_list[] = {"Graph DFS", "Graph BFS", "Dijkstra"};
 static const std::string algo_init_menu[] = {"DFS Menu", "BFS Menu", "Dijkstra Menu"};
-enum AlgoToRun {DFS, BFS, Dijkstra, NoAlgo};
-enum AlgoAnimationMode {Pause, Play, Close};        // TODO: forward, backward
 enum NodeSelectMode {NoSelected, StartSelected, FindSelected};
 
-#define ANIM_NODE_CURR_COLOR        sf::Color(102, 255, 153)    // greenish
-#define ANIM_NODE_VIS_COLOR         sf::Color(255, 102, 217)    // purplish
-#define ANIM_NODE_WILL_VIS_COLOR    sf::Color(255, 217, 102)    // orangish
-
-struct AnimationSteps
-{
-    size_t step = 0;                                // Current step in algorithm (also index to vector array to get nodes)
-    size_t allSteps = 0;                            // Total number of steps/ might not be necessary
-    std::vector<Node*> currNodes;                   // Current node(s) algorithm is on
-    std::vector<Node*> visitedNodes;                // Nodes that have been visited
-    std::vector<Node*> willVisNodes;                // Nodes that will be visited
-    std::unordered_map<ll, Node*> touched;          // All nodes that have been touched to be cleaned after algo finishes
-
-    // TODO: algorithm needs to feed into this class??
-    
-    void clean()
-    {
-        for (auto node = touched.begin(); node != touched.end(); ++node)
-        {
-            node->second->setNodeFillColor(NODE_FILL_COLOR);
-            node->second->setNodeOutlineColor(NODE_OUT_COLOR);      // NOTE: might not be necessary
-        }
-    }
-};
-
-struct AnimTable
-{
-    std::vector<std::string> tableHeader;
-    std::vector<std::vector<std::string>> tableData;
-
-
-};
-
-class AlgoDFS
-{
-    public:
-        AlgoDFS(Node* start, Node* find)
-        {
-
-        }
-};
 
 class Algos{
     public:
@@ -67,6 +24,7 @@ class Algos{
         AlgoToRun runAlgo;
         NodeSelectMode selectMode;
         AlgoAnimationMode animMode;
+        // AlgoAnimationMode animMode;  TODO: replace with IAnimImpl class
 
         // Node selection start menu options
         bool startSelectPressed;

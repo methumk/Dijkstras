@@ -483,14 +483,14 @@ class Gui{
             {
                 // NOTE: view mode should mean no other buttons able to be pressed
                 state = SimulState::ViewMode;
-                size_t w = simul_width+20;
-                size_t h = win_height/2;
-                size_t bw = 25, bh = 25;
-                size_t space = 7;
+                size_t w = simul_width+20, h = win_height/2, bh = 25, space = 7;
                 ImVec2 buttonSize(23, 23);
+
+                // Algo panel
                 ImGui::Begin(algoMan.runningAlgoName.c_str(), NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
-                // ImGui::Begin(algoMan.runningAlgoName.c_str());
                 ImGui::SetWindowPos(ImVec2(w, h));
+
+                // Algo play butons
                 ImGui::BeginGroup();
                 ImGui::SetCursorPos(ImVec2(space, bh));
                 bool play = ImGui::Button("|>", buttonSize);
@@ -510,8 +510,28 @@ class Gui{
                     state = SimulState::AddNodeMode;
                     algoMan.quitAlgo();
                 }
+                ImGui::EndGroup();
 
-                // TODO: should the graph be displayed here??
+                // Group to display table
+                ImGui::BeginGroup();
+                if (ImGui::BeginTable("table1", 3))
+                {
+                    ImGui::TableSetupColumn("0");
+                    ImGui::TableSetupColumn("1");
+                    ImGui::TableSetupColumn("2");
+                    ImGui::TableHeadersRow();
+                    for (int row = 0; row < 50; row++)
+                    {
+                        ImGui::TableNextRow();
+                        for (int column = 0; column < 3; column++)
+                        {
+                            // ImGui::TableSetColumnIndex(column);
+                            ImGui::TableNextColumn();
+                            ImGui::Text("Row %d Column %d", row, column);
+                        }
+                    }
+                    ImGui::EndTable();
+                }
                 ImGui::EndGroup();
                 ImGui::End();
             }
