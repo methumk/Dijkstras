@@ -9,10 +9,12 @@ algoAnimation.hpp
 enum AlgoToRun {DFS, BFS, Dijkstra, NoAlgo};
 enum AlgoAnimationMode {Pause, Play, Close};        // TODO: forward, backward (necessary??)
 
-#define ANIM_NODE_CURR_COLOR        sf::Color(102, 255, 153)    // greenish
-#define ANIM_NODE_VIS_COLOR         sf::Color(255, 102, 217)    // purplish
-#define ANIM_NODE_REACHABLE_COLOR    sf::Color(255, 217, 102)    // orangish
-#define ANIM_NODE_UNTOUCHED_COLOR  NODE_FILL_COLOR             // blue
+#define ANIM_NODE_CURR_COLOR        sf::Color(102, 255, 153)        // greenish
+#define ANIM_NODE_FOUND_COLOR       sf::Color(104, 246, 255)        // cyan
+#define ANIM_NODE_VIS_COLOR         sf::Color(255, 102, 217)        // purplish
+#define ANIM_NODE_REACHABLE_COLOR    sf::Color(255, 217, 102)       // orangish
+#define ANIM_NODE_UNTOUCHED_COLOR  NODE_FILL_COLOR                  // blue
+
 class IAnimImpl
 {
 protected:
@@ -98,7 +100,7 @@ public:
     IAnimImpl()
     {
         currStep = 0;
-        allSteps = 0;
+        allSteps = 1;               // When algo starts step 0 should already be initialized
         currAlgo = AlgoToRun::NoAlgo;
 
         // On first step no nodes are marked as reachable or visited
@@ -106,7 +108,7 @@ public:
         visitedNodes.push_back(std::vector<Node*>());
     }
 
-    virtual void setStartNodes(const std::vector<Node*>& nodes) = 0;    // Nodes that the algorithm starts knowing - derived objects will save these accordingly
+    virtual void setStartNodes(const std::vector<Node*>& nodes) = 0;    // Nodes that the algorithm starts knowing (step 0) - derived objects will save these accordingly
     virtual void stepForward() = 0;      // Stepping forward; passed in nodes is current nodes to run the algo on
 
     // Stepping backward requires unsetting current curr, reachable and vis, and setting previous curr and reachable nodes
@@ -147,6 +149,13 @@ public:
         currNodes.clear();
         reachableNodes.clear();
         visitedNodes.clear();
+    }
+
+    std::string getStepString()
+    {
+        if (currStep < allSteps-1)
+            return "On Step: " + std::to_string(currStep+1) + "/" + std::to_string(allSteps+1);
+        return "Curr Step: " + std::to_string(currStep);
     }
 };
 
