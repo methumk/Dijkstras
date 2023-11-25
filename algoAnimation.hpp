@@ -11,12 +11,12 @@ enum AlgoAnimationMode {Pause, Play, Close};        // TODO: forward, backward (
 
 #define ANIM_NODE_CURR_COLOR        sf::Color(102, 255, 153)    // greenish
 #define ANIM_NODE_VIS_COLOR         sf::Color(255, 102, 217)    // purplish
-#define ANIM_NODE_WILL_VIS_COLOR    sf::Color(255, 217, 102)    // orangish
-
+#define ANIM_NODE_REACHABLE_COLOR    sf::Color(255, 217, 102)    // orangish
+#define ANIM_NODE_UNTOUCHED_COOLOR  NODE_FILL_COLOR             // blue
 class IAnimImpl
 {
-private:
-    size_t currStep;                                                    // Current step in algorithm (also index to vector array to get nodes)
+protected:
+    size_t currStep;                                                    // Current step in algorithm (also index to vector array to get nodes; 0 index)
     size_t allSteps;                                                    // Total number of steps currently ran
     AlgoToRun currAlgo;                                                 // Current algo that is running - TODO: tbd necessary?
 
@@ -33,6 +33,55 @@ private:
     // For clean up
     std::unordered_set<Node*> touched;              // All nodes that have been touched to be cleaned after algo finishes
 
+    void decStep()
+    {
+        assert(currStep != 0);
+        currStep--;
+    }
+
+    void incStep()
+    {
+        currStep++;
+    }
+
+    // Sets the curr step to be the given color; can be either curr color or untouched color (for stepping)
+    void setCurrNodesColor(const size_t& step, const sf::Color& color)
+    {
+        const std::vector<Node*>& currs = currNodes[step];
+        for (size_t idx = 0; idx < currs.size(); ++idx)
+        {
+            if (currs[idx])
+                currs[idx]->setNodeFillColor(color);
+        }
+    }
+
+    // Sets the current step to be visited color
+    // Should be used in tandem with stepForward() and stepBackward()
+    void setVisNodesColor(const size_t& step, bool forward = true)
+    {
+        // Visited nodes only need to get set if current step above all visited steps if we are going forward
+        if (forward && currStep <= visitedNodes.size()) return;
+
+        const std::vector<Node*>& currs = visitedNodes[currStep];
+        for (size_t idx = 0; idx < currs.size(); ++idx)
+        {
+            if (currs[idx])
+                currs[idx]->setNodeFillColor(forward ? ANIM_NODE_VIS_COLOR : ANIM_NODE_UNTOUCHED_COOLOR);
+        }
+    }
+
+    // Can either color nodes as reachable or unreachable
+    void setReachableNodesColor(const size_t& step, const sf::Color& color)
+    {
+        assert(step < allSteps);
+        const std::vector<Node*>& currs = reachableNodes[currStep];
+        for (size_t idx = 0; idx < currs.size(); ++idx)
+        {
+            if (currs[idx])
+                currs[idx]->setNodeFillColor(color);
+        }
+    }
+
 public:
     IAnimImpl()
     {
@@ -40,8 +89,13 @@ public:
         allSteps = 0;
         currAlgo = AlgoToRun::NoAlgo;
     }
-    virtual void stepForward(const std::vector<Node*>& nodes) = 0;      // Stepping forward; passed in nodes is current nodes to run the algo on
-    virtual void stepBackward() = 0;
+
+    virtual void setStartNodes(const std::vector<Node*>& nodes) = 0;    // Nodes that the algorithm starts knowing - derived objects will save these accordingly
+    virtual void stepForward() = 0;      // Stepping forward; passed in nodes is current nodes to run the algo on
+    virtual void stepBackward() = 0;     // Stepping backward; should reference the previous step at the previously computed index
+    virtual ~IAnimImpl(){}
+
+    // Reset the changed node colors
     void clean()
     {
         for (auto itr = touched.begin(); itr != touched.end(); ++itr)
@@ -55,12 +109,40 @@ public:
         reachableNodes.clear();
         visitedNodes.clear();
     }
-    virtual ~IAnimImpl(){}
 };
 
 class DFSImpl : IAnimImpl
 {
+private:
+    Node* start;
+    const Node* find;
 
+public:
+    DFSImpl()
+    {
+        start = NULL;
+        find = NULL;
+    }
+
+    // Passed in nodes assumed to be in order <start, find>
+    void setStartNodes(const std::vector<Node*>& nodes) override 
+    {
+        assert(nodes.size() == 2);
+        start = nodes[0];
+        find = nodes[1];
+    }
+
+    void stepForward()
+    {
+
+    }
+
+    void stepBackward()
+    {
+
+    }
+
+    ~DFSImpl() override {}
 };
 
 
