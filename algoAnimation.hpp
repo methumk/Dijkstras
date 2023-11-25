@@ -12,7 +12,7 @@ enum AlgoAnimationMode {Pause, Play, Close};        // TODO: forward, backward (
 #define ANIM_NODE_CURR_COLOR        sf::Color(102, 255, 153)    // greenish
 #define ANIM_NODE_VIS_COLOR         sf::Color(255, 102, 217)    // purplish
 #define ANIM_NODE_REACHABLE_COLOR    sf::Color(255, 217, 102)    // orangish
-#define ANIM_NODE_UNTOUCHED_COOLOR  NODE_FILL_COLOR             // blue
+#define ANIM_NODE_UNTOUCHED_COLOR  NODE_FILL_COLOR             // blue
 class IAnimImpl
 {
 protected:
@@ -44,6 +44,21 @@ protected:
         currStep++;
     }
 
+    void addCurrNodes(std::vector<Node*> currs)
+    {
+        currNodes.push_back(currs);
+    }
+
+    void addReachableNodes(std::vector<Node*> reachable)
+    {
+        reachableNodes.push_back(reachable);
+    }
+
+    void addVisNodes(std::vector<Node*> vis)
+    {
+        visitedNodes.push_back(vis);
+    }
+
     // Sets the curr step to be the given color; can be either curr color or untouched color (for stepping)
     void setCurrNodesColor(const size_t& step, const sf::Color& color)
     {
@@ -57,16 +72,13 @@ protected:
 
     // Sets the current step to be visited color
     // Should be used in tandem with stepForward() and stepBackward()
-    void setVisNodesColor(const size_t& step, bool forward = true)
+    void setVisNodesColor(const size_t& step, const sf::Color& color)
     {
-        // Visited nodes only need to get set if current step above all visited steps if we are going forward
-        if (forward && currStep <= visitedNodes.size()) return;
-
         const std::vector<Node*>& currs = visitedNodes[currStep];
         for (size_t idx = 0; idx < currs.size(); ++idx)
         {
             if (currs[idx])
-                currs[idx]->setNodeFillColor(forward ? ANIM_NODE_VIS_COLOR : ANIM_NODE_UNTOUCHED_COOLOR);
+                currs[idx]->setNodeFillColor(color);
         }
     }
 
@@ -88,15 +100,35 @@ public:
         currStep = 0;
         allSteps = 0;
         currAlgo = AlgoToRun::NoAlgo;
+
+        // On first step no nodes are marked as reachable or visited
+        reachableNodes.push_back(std::vector<Node*>());
+        visitedNodes.push_back(std::vector<Node*>());
     }
 
     virtual void setStartNodes(const std::vector<Node*>& nodes) = 0;    // Nodes that the algorithm starts knowing - derived objects will save these accordingly
     virtual void stepForward() = 0;      // Stepping forward; passed in nodes is current nodes to run the algo on
-    virtual void stepBackward() = 0;     // Stepping backward; should reference the previous step at the previously computed index
+
+    // Stepping backward requires unsetting current curr, reachable and vis, and setting previous curr and reachable nodes
+    void stepBackward()
+    {
+        decStep();
+        size_t aheadStep = currStep + 1;
+        // Untouch current node, visited nodes, and reachable nodes
+        setCurrNodesColor(aheadStep, ANIM_NODE_UNTOUCHED_COLOR);
+        setReachableNodesColor(aheadStep, ANIM_NODE_UNTOUCHED_COLOR);
+        setVisNodesColor(aheadStep, ANIM_NODE_UNTOUCHED_COLOR);
+        
+        // Current steps should now be highlighted
+        // NOTE: don't have to set visited as it should have been visited before
+        setCurrNodesColor(currStep, ANIM_NODE_UNTOUCHED_COLOR);
+        setReachableNodesColor(currStep, ANIM_NODE_UNTOUCHED_COLOR);
+    }
+
     virtual ~IAnimImpl(){}
 
-    // Reset the changed node colors
-    void clean()
+    // Reset the touched node colors
+    void resetTouchedColors()
     {
         for (auto itr = touched.begin(); itr != touched.end(); ++itr)
         {
@@ -104,7 +136,14 @@ public:
             node->setNodeFillColor(NODE_FILL_COLOR);
             node->setNodeOutlineColor(NODE_OUT_COLOR);      // NOTE: might be unnecessary
         }
+    }
 
+    // Clean the saved node data and reset the touched node colors
+    void cleanSaved()
+    {
+        resetTouchedColors();
+        currStep = 0;
+        allSteps = 0;
         currNodes.clear();
         reachableNodes.clear();
         visitedNodes.clear();
@@ -114,7 +153,8 @@ public:
 class DFSImpl : IAnimImpl
 {
 private:
-    Node* start;
+    Node* curr;
+    const Node* start;
     const Node* find;
 
 public:
@@ -122,6 +162,8 @@ public:
     {
         start = NULL;
         find = NULL;
+        curr = NULL;
+        currAlgo = AlgoToRun::DFS;
     }
 
     // Passed in nodes assumed to be in order <start, find>
@@ -129,17 +171,16 @@ public:
     {
         assert(nodes.size() == 2);
         start = nodes[0];
+        curr = nodes[0]; 
         find = nodes[1];
+
+        // Set step 0 to be the start node
+        setCurrNodesColor(currStep, ANIM_NODE_UNTOUCHED_COLOR);
     }
 
     void stepForward()
     {
-
-    }
-
-    void stepBackward()
-    {
-
+        
     }
 
     ~DFSImpl() override {}
