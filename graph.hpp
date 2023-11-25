@@ -21,10 +21,10 @@ Graph class:
 
 #include "node.hpp"
 
+typedef std::tuple<Node*, ll, ll, bool> ADJ_NODE;               //(tuple: curr node, link weight, link identifier, link type (can main node access curr node))
 
 class Graph{
     private:
-        typedef std::tuple<Node*, ll, ll, bool> ADJ_NODE;               //(tuple: curr node, link weight, link identifier, link type (can main node access curr node))
         size_t simul_width, simul_height;                                   //keeps track of the interface window width and height
         size_t win_width, win_height;                                   //keeps track of the interface window width and height
         size_t num_graphs;                                              //keeps track of the total number of graphs
