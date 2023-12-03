@@ -11,6 +11,7 @@ enum AlgoAnimationMode {Pause, Play, Close};        // TODO: forward, backward (
 
 #define ANIM_NODE_CURR_COLOR        sf::Color(102, 255, 153)        // greenish
 #define ANIM_NODE_FOUND_COLOR       sf::Color(104, 246, 255)        // cyan
+#define ANIM_NODE_FAILED_COLOR      sf::Color(92, 92, 92)           // grey
 #define ANIM_NODE_VIS_COLOR         sf::Color(255, 102, 217)        // purplish
 #define ANIM_NODE_REACHABLE_COLOR    sf::Color(255, 217, 102)       // orangish
 #define ANIM_NODE_UNTOUCHED_COLOR  NODE_FILL_COLOR                  // blue
