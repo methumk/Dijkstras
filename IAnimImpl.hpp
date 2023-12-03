@@ -59,7 +59,7 @@ protected:
     }
 
     // Add a vector of nodes to a given visualizing nodes vector
-    void addNodesToVec(const VisNodesVec vecType, std::vector<Node*> nodes)
+    void addNodesToVec(const VisNodesVec vecType, const std::vector<Node*>& nodes)
     {
         switch(vecType)
         {
