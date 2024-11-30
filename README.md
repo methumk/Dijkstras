@@ -1,17 +1,33 @@
-**GUI**
-- Adding/Deleting Nodes
-- Linking Nodes (user has to add weights, automatic, editable?)
-- clearing everything (nodes and links)
-- Toggling Dijkstra table
-- Toggling Dijkstra drawing
+# Description
+- This is a visualizer for Dijkstra's, BFS, and DFS graph algorithms
+- Nodes are creatable, and singly and doubly linked connections are possible
+- No edge weight can be negative - strictly positive
 
-**Intrinsic**
-- Dijkstra algorithm (will it work on one node?)
-    - Dijkstra would need to know structure of drawn nodes
+![example](./images/dijk_table.JPG)
+- Black nodes represent visited nodes
+- Nodes with green borderes represent current node
+- Orange nodes represent reachable nodes
 
-- Implementation (Gui -> Dijkstra -> Node structure)
-- Gui is going to control both the node structure and the toggling the Dijkstra algorithm on and off
+# Running
+- Store Makefile outside of the source directory where your IMGUI dlls and a directory with imgui files found within the make to create and link the imgui object files
+- run make
+- run ./dijk
 
-**GUI In depth**
-- When user left clicks on screen creates a new node (add visual node info to node -> push node in graph)
-- When user holds right click (and on node to another node - can't be itself) need to store each node in each of their links, then graph needs to remove one of the node from all_graphs (graph should create visual edge and keep track of it)
+
+# Controls
+## Keybindings
+| Control          | Description              |
+|------------------|--------------------------|
+|  Toggling "A" key | Located on the top left, toggling the key a will switch from adding Nodes or links|
+|  Toggling "R" key | Located on the top left, toggling the key r will switch from removing Nodes or links|
+|  Toggling "1"/"2" keys | Located on the top left, toggling between 1 and 2 will switch from singly linked links to doubly respectively (have to be in "Adding links" mode to use")
+
+
+## Actions
+| Control          | Description              |
+|------------------|--------------------------|
+| Creating nodes | Set to adding nodes with the "A" key and click anywhere. NOTE: nodes can't be very close to each other |
+| Removing nodes | Set to removing nodes with the "R" key and click on a node. |
+| Creating link  | Select the type of link you want with "1" or "2". Toggle adding links with the "A" key, and then drag from one node and drop on another. This will prompt for a weight |
+| Removing link | Toggle removing link with the "R" key and drag from one node to another to delete the existing link |
+
