@@ -9,7 +9,7 @@
 - Orange nodes represent reachable nodes
 
 # Running
-- Store Makefile outside of the source directory where your IMGUI dlls and a directory with imgui files found within the make to create and link the imgui object files
+- Store Makefile outside of the source directory where your SFML dlls and a directory with imgui files found within the make to create and link the imgui object files
 - run make
 - run ./dijk
 
