@@ -1013,22 +1013,7 @@ class Graph{
 
         //deconstructor deletes every node for all the graphs
         ~Graph(){
-            //eraseAllGraphs();
-            // UPDATING
-            // std::cout << "Freeing all nodes\n";
-            // for (size_t i=0; i < simul_width*simul_height; ++i){
-            //     if (node_ilocs[i] != nullptr){
-            //             std::cout << "\tFreeing node: " << node_ilocs[i]->getNodeIdent() << '\n';
-            //             delete node_ilocs[i];
-            //             node_ilocs[i] = NULL;
-            //     }
-            // }
             std::cout << "Freeing all MAPPED Nodes\n";
-            // freeAllNodes();
-            for (auto& node : node_wlocs){
-                std::cout << "TEST\n";
-                std::cout << "\tFreeing node: " << (node.second)->getNodeIdent() << '\n';
-                delete node.second;
-            }
+            freeAllNodes();
         }
 };

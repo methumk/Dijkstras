@@ -4,7 +4,9 @@ algo.hpp
  */
 #pragma once
 #include <climits>
-#include "algoAnimation.hpp"
+#include "DFSImpl.hpp"
+#include "BFSImpl.hpp"
+#include "DijkImpl.hpp"
 
 //List of possible algos the user can run
 static const std::string algo_list[] = {"Graph DFS", "Graph BFS", "Dijkstra"};
@@ -23,8 +25,7 @@ class Algos{
         Node* findN;
         AlgoToRun runAlgo;
         NodeSelectMode selectMode;
-        AlgoAnimationMode animMode;
-        // AlgoAnimationMode animMode;  TODO: replace with IAnimImpl class
+        IAnimImpl* algoAnim;
 
         // Node selection start menu options
         bool startSelectPressed;
@@ -36,7 +37,7 @@ class Algos{
             //initialize to no algo running
             runAlgo = NoAlgo;   
             selectMode = NoSelected;
-            animMode = Pause;
+            algoAnim = NULL;
 
             // Stores the nodes to run the algo on
             startN = NULL;
@@ -48,8 +49,8 @@ class Algos{
             runningAlgoName = "";
         }
 
-        //Displays a Menu that allows user to pick which algorithm to run
-        void displayAlgosMenu(AlgoToRun& guiRunAlgo){
+        // Display list of algos in menu the the user can select to run
+        void displayAlgosListMenu(AlgoToRun& guiRunAlgo){
             for (std::string algo : algo_list){
                 if (ImGui::Button(algo.c_str())){
                     if (algo_list[(int)runAlgo] == algo)
@@ -60,10 +61,13 @@ class Algos{
                     }else{
                         if (algo == algo_list[0]){
                             runAlgo = DFS;
+                            algoAnim = new DFSImpl();
                         }else if (algo == algo_list[1]){
                             runAlgo = BFS;
+                            algoAnim = new BFSImpl();
                         }else if (algo == algo_list[2]){
                             runAlgo = Dijkstra;                    
+                            algoAnim = new DijkImpl();        
                         }
                         guiRunAlgo = runAlgo;
                         std::cout << "Clicked on button: " << algo << std::endl;
@@ -73,7 +77,7 @@ class Algos{
         }
 
         // Start menu to allow user to click on start/find nodes
-        void displayAlgosStartMenu()
+        void displayAlgosStartMenu(const size_t& simul_width)
         {
             // No start menu if no algo selected
             if (runAlgo == AlgoToRun::NoAlgo) return;
@@ -84,20 +88,22 @@ class Algos{
             bool startButton = false;
             bool findButton = false;
 
-            ImGui::Begin(algoName.c_str(), NULL, ImGuiWindowFlags_NoMove);
-                    
+            ImGui::Begin(algoName.c_str(), NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+            ImVec2 vec(simul_width+20, 170);
+            ImGui::SetWindowPos(vec);
+
             // Node button selection group
             ImGui::BeginGroup();
             startButtonName = startSelectPressed ? "X###1" : "O###1";
             if (ImGui::Button(startButtonName.c_str(), ImVec2(20, 20))){
-                if (startSelectPressed || findSelectPressed)
+                if (startSelectPressed)
                 {
                     // Button pressed when start/find node is already selected -> clear button's node
                     selectMode = NodeSelectMode::NoSelected;
                     startSelectPressed = false;
                     startN = NULL;
                     std::cout << algoName+" start toggled off\n";
-                }else if (!startSelectPressed){
+                }else{
                     // Button pressed and so selecting start node
                     selectMode = NodeSelectMode::StartSelected;
                     startSelectPressed = true;
@@ -110,14 +116,14 @@ class Algos{
             {
                 findButtonName = findSelectPressed ? "X###2" : "O###2";
                 if (ImGui::Button(findButtonName.c_str(), ImVec2(20, 20))){
-                    if (startSelectPressed || findSelectPressed)
+                    if (findSelectPressed)
                     {
                         // Button pressed when start/find node is already selected -> clear button's node
                         selectMode = NodeSelectMode::NoSelected;
                         findSelectPressed = false;
                         findN = NULL;
                         std::cout << algoName+" find toggled off\n";
-                    }else if (!findSelectPressed){
+                    }else{
                         // Button pressed and so selecting find node
                         selectMode = NodeSelectMode::FindSelected;
                         findSelectPressed = true;
@@ -147,8 +153,35 @@ class Algos{
                 {
                     std::cout << runAlgoMessage+" clicked\n";
                     algoRunning = true;
-                    runningAlgoName = "Debugging "+algo_list[(int) runAlgo];
+                    runningAlgoName = "Step Descriptions for "+algo_list[(int) runAlgo];
+
+                    std::vector<Node*> startNodes{startN};
+
+                    if (runAlgo != AlgoToRun::Dijkstra)
+                    {
+                        // BFS/DFS both need start and find nodes
+                        startNodes.push_back(findN); 
+                    }
+                        algoAnim->setStartNodes(startNodes);
                 }
+            }
+
+            // Clear button when either start or find selected
+            if (startN || (findN || runAlgo == AlgoToRun::Dijkstra))
+            {
+                std:: string clearMessage = "Clear all selected nodes";
+                if (ImGui::Button(clearMessage.c_str(), ImVec2(250, 25)))
+                {
+                    startN = NULL;
+                    findN = NULL;
+                    startSelectPressed = false;
+                    findSelectPressed = false;
+                }
+            }
+
+            if (ImGui::Button(std::string("Exit algorithm").c_str(), ImVec2(250, 25)))
+            {
+                quitAlgo();
             }
             ImGui::End();
         }
@@ -177,7 +210,7 @@ class Algos{
         {
             runAlgo = NoAlgo;   
             selectMode = NoSelected;
-            animMode = Pause;   // is this even necessary
+            delete algoAnim;
 
             // Clear saved nodes
             startN = NULL;
@@ -197,34 +230,22 @@ class Algos{
             return true;
         }
 
-        
-        // NOTE:
-        // UPDATING
-        // Not using weight map, will have table structure that gets printed in IMGUI??
-        void graphDFSManager(Graph* graphMan){
-            ImGui::Begin("DFS");
-            ImGui::Text("Click on a node to start");
-
-            char inputNode[256];
-            memset(inputNode, '\0', 256);
-            ImGui::InputText("Enter Id of node to start", inputNode, 255);
-            std::cout << "\tDFS got: " << inputNode << std::endl;
-            
-
-            /* Node* start = NULL, *end = NULL;
-            if (!checkPossibleID(inputNode, 256)){
-                ll startIdent = std::stoull(inputNode);
-                std::cout << "Algo DFS - start ident: " << startIdent << std::endl;
-                start = graphMan->findNode(startIdent);
-            } */
-
-            //set the current running Algo to none
-            //runAlgo = NoAlgo;
-            ImGui::End();
+        void algoStepForward()
+        {
+            assert(algoAnim);
+            algoAnim->stepForward();
         }
 
-        void runGraphDFS(Node* start){
+        const std::vector<std::string>& algoGetStepDescription()
+        {
+            assert(algoAnim);
+            return algoAnim->getStepDescriptions();
+        }
 
-            runAlgo = NoAlgo;
+        const std::map<ll, CHILD_WEIGHT>& algoGetDijkTable()
+        {
+            assert(algoAnim);
+            assert(runAlgo == AlgoToRun::Dijkstra);
+            return algoAnim->getDijkTable();
         }
 };

@@ -164,7 +164,7 @@ class Node{
         }
 
         //returns current nodes identifier
-        inline ll getNodeIdent(){
+        inline ll getNodeIdent() const{
             return ident;
         }
 

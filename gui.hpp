@@ -426,7 +426,6 @@ class Gui{
                 if (textInputting){
                     char inputNode[256];
                     memset(inputNode, '\0', 256);
-                    std::cout << "OPENING GUI\n";
                     
                     if (ImGui::Begin("Enter Link's Weight")){
                         if (ImGui::InputText("Enter Weight", inputNode, 255, ImGuiInputTextFlags_EnterReturnsTrue) ){
@@ -438,7 +437,7 @@ class Gui{
                                 checkLinking = false;
                             }else if (isNumber(inputNode)){
                                 std::cout << "IS NUMBER\n";
-                                ll weight = std::stoi(input);
+                                ll weight = std::stoll(input);
                                 std::cout << "ENTERED WEIGHT: " << weight << "\n";
                                 graphMan->joinNodes(n1, n2, weight, lstate);
                                 clearTempLink(lstate);
@@ -460,15 +459,15 @@ class Gui{
             if(state == SimulState::ViewMode)
                 return;
 
-            ImGui::Begin("Run Algorithms", NULL, ImGuiWindowFlags_NoMove);
-            ImVec2 vec(10, 10);
+            ImGui::Begin("Run Algorithms", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize );
+            ImVec2 vec(simul_width+200, 20);
             ImGui::SetWindowPos(vec);
-            algoMan.displayAlgosMenu(runAlgo);
+            algoMan.displayAlgosListMenu(runAlgo);
             ImGui::End();
 
             if (runAlgo != AlgoToRun::NoAlgo)
             {
-                algoMan.displayAlgosStartMenu();
+                algoMan.displayAlgosStartMenu(simul_width);
                 bool algoSelectingNode = algoMan.selectMode != NodeSelectMode::NoSelected;
                 if (algoSelectingNode) {state = SimulState::SelectNodeMode;}
             }
@@ -493,46 +492,93 @@ class Gui{
                 // Algo play butons
                 ImGui::BeginGroup();
                 ImGui::SetCursorPos(ImVec2(space, bh));
-                bool play = ImGui::Button("|>", buttonSize);
+                // bool play = ImGui::Button("|>", buttonSize);
 
-                ImGui::SetCursorPos(ImVec2(space + buttonSize.x + space, bh));
-                bool stepBack = ImGui::Button("<", buttonSize);
+                // ImGui::SetCursorPos(ImVec2(space + buttonSize.x + space, bh));
+                // bool stepBack = ImGui::Button("<", buttonSize);
 
-                ImGui::SetCursorPos(ImVec2(space + 2*(buttonSize.x + space), bh));
+                // ImGui::SetCursorPos(ImVec2(space + 2*(buttonSize.x + space), bh));
                 bool stepForward = ImGui::Button(">", buttonSize);
 
-                ImGui::SetCursorPos(ImVec2(space + 3*(buttonSize.x + space), bh));
+                ImGui::SetCursorPos(ImVec2(space + (buttonSize.x + space), bh));
                 bool quit = ImGui::Button("X", buttonSize);
 
-                if (quit)
+                if (stepForward)
                 {
-                    std::cout << "EXITING ALGO\n";
+                    algoMan.algoStepForward();
+                }else if (quit)
+                {
                     state = SimulState::AddNodeMode;
                     algoMan.quitAlgo();
                 }
                 ImGui::EndGroup();
 
-                // Group to display table
+
+                // Display Step messages
                 ImGui::BeginGroup();
-                if (ImGui::BeginTable("table1", 3))
-                {
-                    ImGui::TableSetupColumn("0");
-                    ImGui::TableSetupColumn("1");
-                    ImGui::TableSetupColumn("2");
-                    ImGui::TableHeadersRow();
-                    for (int row = 0; row < 50; row++)
-                    {
-                        ImGui::TableNextRow();
-                        for (int column = 0; column < 3; column++)
-                        {
-                            // ImGui::TableSetColumnIndex(column);
-                            ImGui::TableNextColumn();
-                            ImGui::Text("Row %d Column %d", row, column);
-                        }
-                    }
-                    ImGui::EndTable();
+
+                // Print messages
+                ImVec2 childSize = ImVec2(0, 150); // Width auto, 150px height
+                ImGui::BeginChild("ScrollingRegion", childSize, true, ImGuiWindowFlags_HorizontalScrollbar);
+                for (const auto& line : algoMan.algoGetStepDescription()) {
+                    ImGui::TextUnformatted(line.c_str());
                 }
+
+                // Scroll to the bottom of the text box
+                float scrollY = ImGui::GetScrollY();
+                float scrollMaxY = ImGui::GetScrollMaxY();
+                bool shouldScrollToBottom = (scrollY >= scrollMaxY - 1.0f);
+
+                if (shouldScrollToBottom) {
+                    ImGui::SetScrollHereY(1.0f); // Scroll to the bottom
+                }
+                ImGui::EndChild();
                 ImGui::EndGroup();
+
+
+                // Group to Dijkstra weighted display table
+                if (algoMan.runAlgo == AlgoToRun::Dijkstra)
+                {
+                    ImGui::BeginGroup();
+                    if (ImGui::BeginTable("Path Weight Table", 3))
+                    {
+                        ImGui::TableSetupColumn("Node");
+                        ImGui::TableSetupColumn("Weight");
+                        ImGui::TableSetupColumn("Parent");
+                        ImGui::TableHeadersRow();
+                        for (const auto& [childId, weight] : algoMan.algoGetDijkTable())
+                        {
+                            ImGui::TableNextRow();
+
+                            ImGui::TableSetColumnIndex(0);
+                            // ImGui::TableNextColumn();
+                            std::string text = std::to_string(childId);
+                            ImGui::TextUnformatted(text.c_str());
+
+                            ImGui::TableSetColumnIndex(1);
+                            text = (std::get<0>(weight) == -1 ) ? "INF" : std::to_string(std::get<0>(weight));
+                            ImGui::TextUnformatted(text.c_str());
+
+                            ImGui::TableSetColumnIndex(2);
+                            Node* n = std::get<1>(weight);
+                            text = (n) ? std::to_string(n->getNodeIdent()) : "-";
+                            ImGui::TextUnformatted(text.c_str());
+                        }
+                        // for (int row = 0; row < 50; row++)
+                        // {
+                        //     ImGui::TableNextRow();
+                        //     for (int column = 0; column < 3; column++)
+                        //     {
+                        //         // ImGui::TableSetColumnIndex(column);
+                        //         ImGui::TableNextColumn();
+                        //         ImGui::Text("Row %d Column %d", row, column);
+                        //     }
+                        // }
+                        ImGui::EndTable();
+                    }
+                    ImGui::EndGroup();
+                }
+
                 ImGui::End();
             }
         }
