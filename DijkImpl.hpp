@@ -9,12 +9,12 @@ DijkImpl.hpp
 class DijkImpl : public IAnimImpl
 {
 private:
-     // <Child Node, <weight from parent to child, Parent Node>>
+    // <Child Node, <weight from parent to child, Parent Node>>
 
     Node *curr;
     const Node *start;
 
-    std::string weightMessage = "";                   // Message for set description when getting new reachable nodes;
+    std::string weightMessage = ""; // Message for set description when getting new reachable nodes;
 
     std::unordered_set<Node *> nodesVisited;          // Nodes that have been visited
     std::unordered_map<Node *, CHILD_WEIGHT> toVisit; // Nodes that are should eventually be visited <Child Node, <weight from parent to child, Parent Node>> (Algo will end when this map is empty)
@@ -26,7 +26,7 @@ private:
     void getNewReachableNodes(std::vector<Node *> &reachable)
     {
         assert(curr);
-        
+
         const std::vector<ADJ_NODE> &links = curr->getNodeLinks();
 
         for (const ADJ_NODE &link : links)
@@ -60,8 +60,8 @@ private:
                     {
                         // Add extra description and push to dijk table visualizer
                         ss << "Updating " << curr->getNodeIdent() << "->" << childNode->getNodeIdent() << " weight from " << weight << " to " << newWeight << "\n\t";
-                        addToDijkTable(childNode->getNodeIdent(), std::tuple<ll, Node*>(newWeight, curr));
-                        
+                        addToDijkTable(childNode->getNodeIdent(), std::tuple<ll, Node *>(newWeight, curr));
+
                         std::get<0>(toVisit[childNode]) = newWeight;
                         std::get<1>(toVisit[childNode]) = curr;
                         std::get<0>(weights[childNode]) = newWeight;
@@ -75,13 +75,12 @@ private:
                     // Add extra description and push to dijk table visualizer
                     ss << "Adding " << curr->getNodeIdent() << "->" << childNode->getNodeIdent() << " weight as " << newWeight << "\n\t";
                     weightMessage += ss.str();
-                    addToDijkTable(childNode->getNodeIdent(), std::tuple<ll, Node*>(newWeight, curr));
+                    addToDijkTable(childNode->getNodeIdent(), std::tuple<ll, Node *>(newWeight, curr));
 
                     // Store weights for the first time from curr to child node
                     toVisit.emplace(childNode, std::tuple<ll, Node *>{newWeight, curr});
                     weights.emplace(childNode, std::tuple<ll, Node *>{newWeight, curr});
                 }
-                
             }
         }
     }
@@ -134,7 +133,7 @@ public:
 
         // Add step description
         addStepDescription(0, NULL, NULL, false);
-        addToDijkTable(curr->getNodeIdent(), std::tuple<ll, Node*>(0, NULL));
+        addToDijkTable(curr->getNodeIdent(), std::tuple<ll, Node *>(0, NULL));
     }
 
     void stepForward() override
